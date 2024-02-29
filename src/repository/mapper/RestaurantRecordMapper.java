@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import domain.Restaurant;
 
-interface RestaurantRecordMapper {
+public interface RestaurantRecordMapper {
     
     Restaurant mapToRestaurant(byte[] record) throws IOException;
 

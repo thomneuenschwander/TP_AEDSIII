@@ -20,5 +20,7 @@ public interface RestaurantRepository {
 
   boolean update(Restaurant updatedRestaurant) throws Exception;
 
+  void delete(int id) throws Exception;
+
   void persistAll(List<Restaurant> restaurants) throws Exception;
 }

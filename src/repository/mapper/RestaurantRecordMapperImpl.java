@@ -9,7 +9,7 @@ import java.time.Instant;
 
 import domain.Restaurant;
 
-public class RestaurantRecordMapperImpl implements RestaurantRecordMapper{
+public class RestaurantRecordMapperImpl implements RestaurantRecordMapper {
 
     private final int lengthStringFixed;
 
@@ -34,7 +34,7 @@ public class RestaurantRecordMapperImpl implements RestaurantRecordMapper{
         var restaurant = readDataStream(dis);
         return restaurant;
     }
-    
+
     private void writeInDataStream(DataOutputStream dos, Restaurant restaurant) throws IOException {
         dos.writeInt(restaurant.getId());
         dos.writeUTF(restaurant.getName());
@@ -86,22 +86,21 @@ public class RestaurantRecordMapperImpl implements RestaurantRecordMapper{
         System.arraycopy(strBytes, 0, bytes, 0, Math.min(strBytes.length, lengthStringFixed));
         dos.write(bytes);
     }
-    
+
     public String readFixedLengthString(DataInputStream dis) throws IOException {
         byte[] bytes = new byte[lengthStringFixed];
         dis.readFully(bytes);
         return new String(bytes, "UTF-8").trim();
     }
-    
 
     public static short calculateRestaurantRecordSize(Restaurant restaurant) {
-        short size = (short) (Integer.BYTES + Short.BYTES + restaurant.getName().length() + Short.BYTES + Short.BYTES
+        short size = (short) (Integer.BYTES + Short.BYTES + restaurant.getName().length() + Short.BYTES
                 + restaurant.getPostalCode().length() + Short.BYTES + restaurant.getCity().length() + Short.BYTES
-                + restaurant.getAddress().length() + Double.BYTES + Double.BYTES+Long.BYTES+Short.BYTES);
-        for(String category : restaurant.getCategories()){
+                + restaurant.getAddress().length() + Double.BYTES + Double.BYTES + Long.BYTES + Short.BYTES);
+        for (String category : restaurant.getCategories()) {
             size += category.length() + Short.BYTES;
         }
-        for(String website : restaurant.getWebsites()){
+        for (String website : restaurant.getWebsites()) {
             size += website.length() + Short.BYTES;
         }
         return size;

@@ -3,7 +3,6 @@ package domain;
 import java.time.Instant;
 import java.util.Arrays;
 
-
 public class Restaurant {
 
         private int id; // Identity
@@ -123,4 +122,5 @@ public class Restaurant {
                                 + ", latitude=" + latitude + ", longitude=" + longitude + ", dateUpdated=" + dateUpdated
                                 + ", websites=" + Arrays.toString(websites) + "]";
         }
+            
 }
