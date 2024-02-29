@@ -19,7 +19,7 @@
 | latitude    | Double   | Latitude do restaurante, ponto flutuante para precisão geográfica.  |
 | longitude   | Double   | Longitude do restaurante, ponto flutuante para precisão geográfica. |
 | dateUpdated | Instant  | Data e hora da última atualização do registro do restaurante.       |
-| website     | String   | Lista de sites do restaurante.                              |
+| websites     | String[]   | Lista de sites do restaurante.                              |
 
 ## `Restaurant Model`
 
