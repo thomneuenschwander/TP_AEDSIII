@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import domain.Restaurant;
 import domain.exceptions.DuplicateIdException;
+import repository.mapper.RestaurantRecordMapperImpl;
 
 /*
     Comments:
@@ -21,9 +22,9 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
 
     private final File file;
     private final RandomAccessFile raf;
-    private final RestaurantRecordMapper mapper;
+    private final RestaurantRecordMapperImpl mapper;
 
-    public RestaurantRepositoryImpl(String binaryFilePath, RestaurantRecordMapper recordRestaurantMapper)
+    public RestaurantRepositoryImpl(String binaryFilePath, RestaurantRecordMapperImpl recordRestaurantMapper)
             throws IOException {
         this.file = new File(binaryFilePath);
         if (!this.file.exists()) {
@@ -37,9 +38,9 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
     @Override
     public void save(Restaurant restaurant) throws Exception {
         int lastAddedId = readLastAddedId();
-        if(restaurant.getId() >= 0 && restaurant.getId() <= lastAddedId){
+        if (restaurant.getId() >= 0 && restaurant.getId() <= lastAddedId) {
             throw new DuplicateIdException(restaurant.getId());
-        }else if(restaurant.getId() < 0){
+        } else if (restaurant.getId() < 0) {
             restaurant.setId(++lastAddedId);
         }
         try {
@@ -50,12 +51,12 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         }
     }
 
-    private void persistRecordWithSize(Restaurant restaurant, long filePosition) throws IOException{
-            raf.seek(file.length());
-            byte[] record = mapper.mapToRecord(restaurant);
-            int recordSize = record.length;
-            raf.writeShort(recordSize);
-            raf.write(record);
+    private void persistRecordWithSize(Restaurant restaurant, long filePosition) throws IOException {
+        raf.seek(file.length());
+        byte[] record = mapper.mapToRecord(restaurant);
+        int recordSize = record.length;
+        raf.writeShort(recordSize);
+        raf.write(record);
     }
 
     @Override
@@ -71,7 +72,8 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                 if (currentId == id) {
                     long recordStartPosition = currentPointer + Short.BYTES;
                     raf.seek(recordStartPosition);
-                    Restaurant found = mapper.mapToRestaurant(raf);
+                    byte[] record = readDataStream(recordSize);
+                    Restaurant found = mapper.mapToRestaurant(record);
                     return Optional.of(found);
                 } else {
                     long nextOffset = currentPointer + recordSize + 2;
@@ -98,7 +100,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                 if (currentId == updatedRestaurant.getId()) {
                     long recordStartPosition = currentPointer + Short.BYTES;
                     raf.seek(recordStartPosition);
-                    
+
                     raf.writeInt(-1);
                     found = true;
                     break;
@@ -110,10 +112,10 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                 break;
             }
         }
-        if(found){
+        if (found) {
             persistRecordWithSize(updatedRestaurant, file.length());
         }
-        return found; 
+        return found;
     }
 
     @Override
@@ -130,6 +132,12 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private byte[] readDataStream(short recordSize) throws IOException {
+        byte[] recordData = new byte[recordSize];
+        raf.readFully(recordData);
+        return recordData;
     }
 
     private int readLastAddedId() throws IOException {
@@ -150,5 +158,4 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         }
     }
 
-    
 }

@@ -4,8 +4,8 @@ import application.RestaurantServiceImpl;
 import application.resource.ReaderCSV;
 import application.resource.RestaurantResource;
 import domain.Restaurant;
-import repository.RestaurantRecordMapper;
 import repository.RestaurantRepositoryImpl;
+import repository.mapper.RestaurantRecordMapperImpl;
 
 /**
  * Main
@@ -14,7 +14,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        var repository = new RestaurantRepositoryImpl("src/repository/db/Fast_Food_Restaurants.bin", new RestaurantRecordMapper());
+        var repository = new RestaurantRepositoryImpl("src/repository/db/Fast_Food_Restaurants.bin", new RestaurantRecordMapperImpl(5));
         var service = new RestaurantServiceImpl(repository);
         var resource = new RestaurantResource(service, new ReaderCSV("dataset/Fast_Food_Restaurants.csv"));
 
@@ -35,6 +35,8 @@ public class Main {
         String[] web3 = {"http://www.sushimaster.com"};
         repository.save(new Restaurant("Sushi Master", cat3, "98765", "Tokyo", "Shibuya-ku, 1-2-3", 35.6895, 139.6917, Instant.now(), web3));
         System.out.println(repository.findById(10001));
+        repository.save(new Restaurant("asdaaa as", cat3, "98765", "Tokyo", "Shibuya-ku, 1-2-3", 35.6895, 139.6917, Instant.now(), web3));
+        System.out.println(repository.findById(10002));
     }
 
     
