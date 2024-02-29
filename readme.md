@@ -43,7 +43,7 @@ public record Restaurant(
 
 | Campo       | Tipo de Dados no Arquivo | Bytes Reservados                                  | Observação                                                                                     |
 | ----------- | ------------------------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| size          | short  | 4 | Total de bytes gasto no registro
+| size          | short  | 2 | Total de bytes gasto no registro
 | id          | int                      | 4                                                 | Inteiros são escritos como 4 bytes.                                                            |
 | name        | UTF       | 2 (comprimento) + N (dados da string)                       | Strings UTF têm 2 bytes para o comprimento, mais o número de bytes dos dados.                  |
 | categories  | UTF Array                | 2 (número de categorias) + Sum(2+N) por categoria | Cada string de categoria tem um overhead de 2 bytes para o comprimento, mais N bytes de dados. |
