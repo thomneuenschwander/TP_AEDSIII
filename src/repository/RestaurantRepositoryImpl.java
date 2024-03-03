@@ -13,7 +13,6 @@ import domain.exceptions.DuplicateIdException;
 import domain.exceptions.ResourceNotFoundException;
 import repository.mapper.RestaurantRecordMapper;
 
-
 /*
     Comments:
 
@@ -89,49 +88,11 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         return Optional.empty();
     }
 
-    // @Override
-    // public boolean update(Restaurant updatedRestaurant) throws Exception {
-    //     raf.seek(0);
-    //     raf.skipBytes(Integer.BYTES);
-    //     boolean found = false, alreadyUpdated = false;
-    //     while (true) {
-    //         try {
-    //             long currPointer = raf.getFilePointer();
-    //             short currRecordSize = raf.readShort();
-    //             int currId = raf.readInt();
-                
-    //             if (currId == updatedRestaurant.getId()) {
-    //                 long recordStartPosition = currPointer + Short.BYTES;
-    //                 raf.seek(recordStartPosition);
-    //                 short updatedRecordSize = calculateRecordSize(updatedRestaurant);
-    //                 System.out.println(updatedRecordSize+ " < "+ currRecordSize);
-    //                 if(updatedRecordSize < currRecordSize){
-    //                     persistRecordWithSize(updatedRestaurant, recordStartPosition);
-    //                     alreadyUpdated = true;
-    //                 }else{
-    //                     raf.writeInt(-1);
-    //                 }
-    //                 found = true;
-    //                 break;
-    //             } else {
-    //                 long nextOffset = currPointer + currRecordSize + 2;
-    //                 raf.seek(nextOffset);
-    //             }
-    //         } catch (EOFException e) {
-    //             break;
-    //         }
-    //     }
-    //     if (!alreadyUpdated && found) {
-    //         persistRecordWithSize(updatedRestaurant, file.length());
-    //     }
-    //     return found;
-    // }
-
     @Override
     public boolean update(Restaurant updatedRestaurant) throws Exception {
         raf.seek(0);
         raf.skipBytes(Integer.BYTES);
-        boolean found = false;
+        boolean found = false, isAlreadyPersisted = false;
         while (true) {
             try {
                 long currentPointer = raf.getFilePointer();
@@ -139,11 +100,16 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                 int currentId = raf.readInt();
 
                 if (currentId == updatedRestaurant.getId()) {
+                    found = true;
                     long recordStartPosition = currentPointer + Short.BYTES;
                     raf.seek(recordStartPosition);
-
-                    raf.writeInt(-1);
-                    found = true;
+                    short updatedRecordSize = (short) mapper.mapToRecord(updatedRestaurant).length;
+                    if (recordSize == updatedRecordSize) {
+                        persistRecordWithSize(updatedRestaurant, recordStartPosition);
+                        isAlreadyPersisted = true;
+                    } else {
+                        raf.writeInt(-1);
+                    }
                     break;
                 } else {
                     long nextOffset = currentPointer + recordSize + 2;
@@ -153,7 +119,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                 break;
             }
         }
-        if (found) {
+        if (found && !isAlreadyPersisted) {
             persistRecordWithSize(updatedRestaurant, file.length());
         }
         return found;
@@ -185,7 +151,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                 break;
             }
         }
-        if(!found){
+        if (!found) {
             throw new ResourceNotFoundException(id);
         }
     }
@@ -200,16 +166,16 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                     e.printStackTrace();
                 }
             });
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public List<Restaurant> findAll(){
+    public List<Restaurant> findAll() {
         List<Restaurant> allRestaurants = new ArrayList<>();
-        try{
+        try {
             raf.seek(0);
             raf.skipBytes(Integer.BYTES);
             while (true) {
@@ -223,7 +189,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                 }
             }
         } catch (Exception e) {
-            // TODO: handle exception
+            e.printStackTrace();
         }
         return allRestaurants;
     }
@@ -245,17 +211,11 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         raf.writeInt(id);
     }
 
-    // private short calculateRecordSize(Restaurant restaurant) throws IOException{
-    //     byte[] record = mapper.mapToRecord(restaurant);
-    //     return (short) record.length;
-    // }
-
     @Override
     public void close() throws Exception {
         if (raf != null) {
             raf.close();
         }
     }
-
 
 }

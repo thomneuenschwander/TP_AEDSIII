@@ -3,6 +3,7 @@ package repository.mapper;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.time.Instant;
@@ -35,25 +36,25 @@ public class RestaurantRecordMapperImpl implements RestaurantRecordMapper {
         return restaurant;
     }
 
-    private void writeInDataStream(DataOutputStream dos, Restaurant restaurant) throws IOException {
-        dos.writeInt(restaurant.getId());
-        dos.writeUTF(restaurant.getName());
+    private void writeInDataStream(DataOutput dataOutput, Restaurant restaurant) throws IOException {
+        dataOutput.writeInt(restaurant.getId());
+        dataOutput.writeUTF(restaurant.getName());
         String[] categories = restaurant.getCategories();
-        dos.writeShort(categories.length);
+        dataOutput.writeShort(categories.length);
         for (String category : categories) {
-            dos.writeUTF(category);
+            dataOutput.writeUTF(category);
         }
-        writeFixedLengthString(dos, restaurant.getPostalCode());
-        dos.writeUTF(restaurant.getCity());
-        dos.writeUTF(restaurant.getAddress());
-        dos.writeDouble(restaurant.getLatitude());
-        dos.writeDouble(restaurant.getLongitude());
+        writeFixedLengthString(dataOutput, restaurant.getPostalCode());
+        dataOutput.writeUTF(restaurant.getCity());
+        dataOutput.writeUTF(restaurant.getAddress());
+        dataOutput.writeDouble(restaurant.getLatitude());
+        dataOutput.writeDouble(restaurant.getLongitude());
         long timeInMillis = restaurant.getDateUpdated().toEpochMilli();
-        dos.writeLong(timeInMillis);
+        dataOutput.writeLong(timeInMillis);
         String[] websites = restaurant.getWebsites();
-        dos.writeShort(websites.length);
+        dataOutput.writeShort(websites.length);
         for (String website : websites) {
-            dos.writeUTF(website);
+            dataOutput.writeUTF(website);
         }
     }
 
@@ -80,29 +81,16 @@ public class RestaurantRecordMapperImpl implements RestaurantRecordMapper {
                 longitude, Instant.ofEpochMilli(timeInMillis), websites);
     }
 
-    private void writeFixedLengthString(DataOutputStream dos, String str) throws IOException {
+    private void writeFixedLengthString(DataOutput dataOutput, String str) throws IOException {
         byte[] bytes = new byte[lengthStringFixed];
         byte[] strBytes = str.getBytes("UTF-8");
         System.arraycopy(strBytes, 0, bytes, 0, Math.min(strBytes.length, lengthStringFixed));
-        dos.write(bytes);
+        dataOutput.write(bytes);
     }
 
     public String readFixedLengthString(DataInputStream dis) throws IOException {
         byte[] bytes = new byte[lengthStringFixed];
         dis.readFully(bytes);
         return new String(bytes, "UTF-8").trim();
-    }
-
-    public static short calculateRestaurantRecordSize(Restaurant restaurant) {
-        short size = (short) (Integer.BYTES + Short.BYTES + restaurant.getName().length() + Short.BYTES
-                + restaurant.getPostalCode().length() + Short.BYTES + restaurant.getCity().length() + Short.BYTES
-                + restaurant.getAddress().length() + Double.BYTES + Double.BYTES + Long.BYTES + Short.BYTES);
-        for (String category : restaurant.getCategories()) {
-            size += category.length() + Short.BYTES;
-        }
-        for (String website : restaurant.getWebsites()) {
-            size += website.length() + Short.BYTES;
-        }
-        return size;
     }
 }
