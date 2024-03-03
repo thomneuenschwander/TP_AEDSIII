@@ -1,9 +1,6 @@
 package domain;
 
-import java.io.IOException;
 import java.util.List;
-
-import domain.exceptions.ResourceNotFoundException;
 
 /*
     Responsibilities:
@@ -16,11 +13,11 @@ public interface RestaurantService {
 
     List<Restaurant> readAll() throws Exception;
 
-    Restaurant read(int id) throws ResourceNotFoundException, IOException;
+    Restaurant read(int id) throws Exception;
 
     void update(int id, Restaurant req) throws Exception;
 
-    void delete(int id) throws IOException;
+    void delete(int id) throws Exception;
 
     void saveAll(List<Restaurant> restaurants) throws Exception;
 }

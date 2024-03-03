@@ -4,6 +4,7 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -203,6 +204,28 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public List<Restaurant> findAll(){
+        List<Restaurant> allRestaurants = new ArrayList<>();
+        try{
+            raf.seek(0);
+            raf.skipBytes(Integer.BYTES);
+            while (true) {
+                try {
+                    short recordSize = raf.readShort();
+                    byte[] record = readDataStream(recordSize);
+                    Restaurant read = mapper.mapToRestaurant(record);
+                    allRestaurants.add(read);
+                } catch (EOFException e) {
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+        return allRestaurants;
     }
 
     private byte[] readDataStream(short recordSize) throws IOException {

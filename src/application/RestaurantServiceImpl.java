@@ -1,7 +1,5 @@
 package application;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import domain.Restaurant;
@@ -20,12 +18,12 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public List<Restaurant> readAll() throws Exception {
-        return new ArrayList<>();
+        return repository.findAll();
     }
 
     @Override
-    public Restaurant read(int id) throws ResourceNotFoundException, IOException  {
-        return null;
+    public Restaurant read(int id) throws Exception  {
+        return repository.findById(id).orElseThrow(() -> new  ResourceNotFoundException(id));
     }
 
     @Override
@@ -33,12 +31,13 @@ public class RestaurantServiceImpl implements RestaurantService {
         if(!verifyPostalCode(restaurant.getPostalCode())){
             throw new InvalidValueException("postalCode", restaurant.getPostalCode());
         }
-        
+        restaurant.setId(id);
+        repository.update(restaurant);
     }
 
     @Override
-    public void delete(int id) throws IOException {
-       
+    public void delete(int id) throws Exception {
+       repository.delete(id);
     }
 
     @Override

@@ -23,4 +23,6 @@ public interface RestaurantRepository {
   void delete(int id) throws Exception;
 
   void persistAll(List<Restaurant> restaurants) throws Exception;
+
+  List<Restaurant> findAll();
 }
