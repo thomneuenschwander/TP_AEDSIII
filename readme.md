@@ -1,6 +1,7 @@
 # Trabalho Prático I - AEDS III
 
 #### [Thomas Neuenschwander](https://www.linkedin.com/in/thomas-neuenschwander-87a568267/)
+#### [Vitor Manoel Silva](https://www.linkedin.com/in/vitor-silva-41b794236/)
 
 #### [Dataset link](https://www.kaggle.com/datasets/thedevastator/fast-food-restaurants-in-the-united-states)
 
