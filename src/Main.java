@@ -51,7 +51,7 @@ public class Main {
                                         sc.nextLine();
 
                                         Restaurant updated = createRestaurant(sc);
-
+                                        // Restaurant updated = createRestaurants().get(0);
                                         var res3 = resource.update(updateId, updated);
                                         System.out.println(res3);
 

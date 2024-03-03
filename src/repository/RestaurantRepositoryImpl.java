@@ -92,7 +92,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
     public boolean update(Restaurant updatedRestaurant) throws Exception {
         raf.seek(0);
         raf.skipBytes(Integer.BYTES);
-        boolean found = false, isAlreadyPersisted = false;
+        boolean found = false;
         while (true) {
             try {
                 long currentPointer = raf.getFilePointer();
@@ -106,10 +106,11 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                     short updatedRecordSize = (short) mapper.mapToRecord(updatedRestaurant).length;
                     if (recordSize == updatedRecordSize) {
                         persistRecordWithSize(updatedRestaurant, recordStartPosition);
-                        isAlreadyPersisted = true;
                     } else {
                         raf.writeInt(-1);
+                        persistRecordWithSize(updatedRestaurant, file.length());
                     }
+
                     break;
                 } else {
                     long nextOffset = currentPointer + recordSize + 2;
@@ -119,9 +120,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                 break;
             }
         }
-        if (found && !isAlreadyPersisted) {
-            persistRecordWithSize(updatedRestaurant, file.length());
-        }
+
         return found;
     }
 
