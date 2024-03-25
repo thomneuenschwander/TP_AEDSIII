@@ -2,6 +2,7 @@ package repository.mapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
@@ -88,7 +89,7 @@ public class RestaurantRecordMapperImpl implements RestaurantRecordMapper {
         dataOutput.write(bytes);
     }
 
-    public String readFixedLengthString(DataInputStream dis) throws IOException {
+    public String readFixedLengthString(DataInput dis) throws IOException {
         byte[] bytes = new byte[lengthStringFixed];
         dis.readFully(bytes);
         return new String(bytes, "UTF-8").trim();
