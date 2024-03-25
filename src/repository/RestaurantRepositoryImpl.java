@@ -107,8 +107,10 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                     raf.seek(recordStartPosition);
 
                     short updatedRecordSize = getRecordLength(updatedRestaurant);
-                    if (recordSize == updatedRecordSize) {
+                    if (recordSize <= updatedRecordSize) {
                         persistRecordWithSize(updatedRestaurant, updatedRecordSize, recordStartPosition);
+                        raf.seek(recordStartPosition + Short.BYTES);
+                        writeRecorInStream(raf, updatedRestaurant);
                     } else {
                         raf.writeInt(-1);
                         persistRecordWithSize(updatedRestaurant, updatedRecordSize,  file.length());
