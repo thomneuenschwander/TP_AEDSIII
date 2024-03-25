@@ -1,5 +1,8 @@
 package repository;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +16,6 @@ import java.util.Optional;
 import domain.Restaurant;
 import domain.exceptions.DuplicateIdException;
 import domain.exceptions.ResourceNotFoundException;
-import repository.mapper.RestaurantRecordMapper;
 
 /*
     Comments:
@@ -26,15 +28,15 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
 
     private final File file;
     private final RandomAccessFile raf;
-    private final RestaurantRecordMapper mapper;
+    private final int LENGTH_STRING_FIXED;
 
-    public RestaurantRepositoryImpl(String binaryFilePath, RestaurantRecordMapper recordRestaurantMapper)
+    public RestaurantRepositoryImpl(String binaryFilePath, int LENGTH_STRING_FIXED)
             throws IOException {
+        this.LENGTH_STRING_FIXED = LENGTH_STRING_FIXED;
         this.file = new File(binaryFilePath);
         if (!this.file.exists()) {
             this.file.createNewFile();
         }
-        this.mapper = recordRestaurantMapper;
         this.raf = new RandomAccessFile(file, "rw");
         writeLastAddedId(-1);
     }
@@ -48,19 +50,18 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
             restaurant.setId(++lastAddedId);
         }
         try {
-            persistRecordWithSize(restaurant, file.length());
+            short recordSize = getRecordLength(restaurant);
+            persistRecordWithSize(restaurant, recordSize, file.length());
             writeLastAddedId(restaurant.getId());
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void persistRecordWithSize(Restaurant restaurant, long filePosition) throws IOException {
-        raf.seek(filePosition);
-        byte[] record = mapper.mapToRecord(restaurant);
-        int recordSize = record.length;
-        raf.writeShort(recordSize);
-        raf.write(record);
+    private void persistRecordWithSize(Restaurant restaurant, short size, long address) throws IOException {
+        raf.seek(address);
+        raf.writeShort(size);
+        writeRecorInStream(raf, restaurant);
     }
 
     @Override
@@ -104,12 +105,13 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                     found = true;
                     long recordStartPosition = pointer + Short.BYTES;
                     raf.seek(recordStartPosition);
-                    short updatedRecordSize = (short) mapper.mapToRecord(updatedRestaurant).length;
+
+                    short updatedRecordSize = getRecordLength(updatedRestaurant);
                     if (recordSize == updatedRecordSize) {
-                        persistRecordWithSize(updatedRestaurant, recordStartPosition);
+                        persistRecordWithSize(updatedRestaurant, updatedRecordSize, recordStartPosition);
                     } else {
                         raf.writeInt(-1);
-                        persistRecordWithSize(updatedRestaurant, file.length());
+                        persistRecordWithSize(updatedRestaurant, updatedRecordSize,  file.length());
                     }
 
                     break;
@@ -193,7 +195,6 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         return allRestaurants;
     }
 
-    
     private Restaurant readRestaurantFromStream(RandomAccessFile raf) throws IOException {
         int id = raf.readInt();
         String name = raf.readUTF();
@@ -216,6 +217,58 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         return new Restaurant(id, name, categories, postalCode, city, address, latitude,
         longitude, Instant.ofEpochMilli(timeInMillis), websites);
     }
+
+    private void writeRecorInStream(DataOutput raf, Restaurant restaurant) throws IOException {
+        raf.writeInt(restaurant.getId());
+        writeUTF(raf, restaurant.getName());
+        
+        String[] categories = restaurant.getCategories();
+        raf.writeShort(categories.length);
+        for (String category : categories) {
+            writeUTF(raf, category);
+        }
+
+        writeFixedLengthString(raf, restaurant.getPostalCode());
+        writeUTF(raf, restaurant.getCity());
+        writeUTF(raf, restaurant.getAddress());
+        raf.writeDouble(restaurant.getLatitude());
+        raf.writeDouble(restaurant.getLongitude());
+        raf.writeLong(restaurant.getDateUpdated().toEpochMilli());
+
+        String[] websites = restaurant.getWebsites();
+        raf.writeShort(websites.length);
+        for (String website : websites) {
+            writeUTF(raf, website);
+        }
+    }
+
+    private short getRecordLength(Restaurant restaurant) throws IOException{
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        writeRecorInStream(dos, restaurant);
+        baos.flush();
+        dos.flush();
+        return (short)baos.toByteArray().length;
+    }
+
+    private void writeUTF(DataOutput raf, String value) throws IOException {
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        raf.writeShort(bytes.length);
+        raf.write(bytes);
+    }
+
+    private String readFixedLengthString(RandomAccessFile raf) throws IOException {
+        byte[] bytes = new byte[LENGTH_STRING_FIXED];
+        raf.readFully(bytes);
+        return new String(bytes, StandardCharsets.UTF_8).trim();
+    }
+
+    private void writeFixedLengthString(DataOutput raf, String value) throws IOException {
+        byte[] bytes = new byte[LENGTH_STRING_FIXED];
+        byte[] stringBytes = value.getBytes(StandardCharsets.UTF_8);
+        System.arraycopy(stringBytes, 0, bytes, 0, Math.min(stringBytes.length, LENGTH_STRING_FIXED));
+        raf.write(bytes);
+    }
     
     private int readLastAddedId() throws IOException {
         raf.seek(0);
@@ -227,12 +280,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         raf.seek(0);
         raf.writeInt(id);
     }
-    
-    private String readFixedLengthString(RandomAccessFile raf) throws IOException {
-        byte[] bytes = new byte[5];
-        raf.readFully(bytes);
-        return new String(bytes, StandardCharsets.UTF_8).trim();
-    }
+
 
     @Override
     public void close() throws Exception {

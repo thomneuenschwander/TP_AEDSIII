@@ -8,7 +8,6 @@ import application.resource.ReaderCSV;
 import application.resource.RestaurantResource;
 import domain.Restaurant;
 import repository.RestaurantRepositoryImpl;
-import repository.mapper.RestaurantRecordMapperImpl;
 
 /**
  * Main
@@ -17,8 +16,7 @@ public class Main {
 
         public static void main(String[] args) throws Exception {
 
-                var repository = new RestaurantRepositoryImpl("src/repository/db/Fast_Food_Restaurants.bin",
-                                new RestaurantRecordMapperImpl(5));
+                var repository = new RestaurantRepositoryImpl("src/repository/db/Fast_Food_Restaurants.bin", 5);
                 var service = new RestaurantServiceImpl(repository);
                 var resource = new RestaurantResource(service, new ReaderCSV("dataset/Fast_Food_Restaurants.csv"));
 
@@ -51,7 +49,6 @@ public class Main {
                                         sc.nextLine();
 
                                         Restaurant updated = createRestaurant(sc);
-                                        // Restaurant updated = createRestaurants().get(0);
                                         var res3 = resource.update(updateId, updated);
                                         System.out.println(res3);
 
