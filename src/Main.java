@@ -7,15 +7,16 @@ import application.RestaurantServiceImpl;
 import application.resource.ReaderCSV;
 import application.resource.RestaurantResource;
 import domain.Restaurant;
-import repository.RestaurantRepositoryImpl;
+import repository.manager.RestaurantPersister;
+import repository.manager.RestaurantRepositoryImpl;
 
 public class Main {
 
         public static void main(String[] args) throws Exception {
 
                 var repository = new RestaurantRepositoryImpl(
-                                "src/repository/db/Fast_Food_Restaurants.bin",
-                                5);
+                                "src/repository/manager/data/Fast_Food_Restaurants.bin",
+                                new RestaurantPersister(5));
                 var service = new RestaurantServiceImpl(repository);
                 var resource = new RestaurantResource(service, new ReaderCSV("dataset/Fast_Food_Restaurants.csv"));
 
