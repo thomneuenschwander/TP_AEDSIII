@@ -4,13 +4,21 @@ import java.util.List;
 
 public class Response<T> {
     private final int status;
+    private final long timestamp;
     private final String message;
     private final T body;
 
+    public Response(int status, String message, T body, long timestamp) {
+        this.status = status;
+        this.message = message;
+        this.body = body;
+        this.timestamp = timestamp;
+    }
     public Response(int status, String message, T body) {
         this.status = status;
         this.message = message;
         this.body = body;
+        this.timestamp = 0;
     }
 
     public int getStatus() {
@@ -31,6 +39,8 @@ public class Response<T> {
         sb.append("Response {");
         sb.append(System.lineSeparator());
         sb.append("\tstatus: ").append(status);
+        sb.append(System.lineSeparator());
+        sb.append("\ttimestamp: ").append(timestamp).append(" ms");
         sb.append(System.lineSeparator());
         sb.append("\tmessage: '").append(message).append("'");
         sb.append(System.lineSeparator());

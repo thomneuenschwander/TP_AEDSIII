@@ -9,49 +9,77 @@ import application.resource.RestaurantResource;
 import domain.Restaurant;
 import repository.RestaurantRepositoryImpl;
 
-/**
- * Main
- */
 public class Main {
 
         public static void main(String[] args) throws Exception {
 
-                var repository = new RestaurantRepositoryImpl("src/repository/db/Fast_Food_Restaurants.bin", 5);
+                var repository = new RestaurantRepositoryImpl(
+                                "src/repository/db/Fast_Food_Restaurants.bin",
+                                5);
                 var service = new RestaurantServiceImpl(repository);
                 var resource = new RestaurantResource(service, new ReaderCSV("dataset/Fast_Food_Restaurants.csv"));
 
-                resource.populate();
-
                 Scanner sc = new Scanner(System.in);
                 while (true) {
-                        loadMenu();
+                        System.out.println("Escolha uma forma de operar: ");
+                        System.out.println("Tecle '0' para popular o banco de dados");
+                        System.out.println("\n1. Acesso Sequencial");
+                        System.out.println("2. Acesso Indexado com Arvore B");
+                        System.out.println("3. Acesso Indexado com Hash Table");
+                        System.out.println("4. Acesso Indexado com Lista invertida\n");
+                        System.out.println("5. Sair do programa\n");
                         System.out.print("Opção: ");
                         int option = sc.nextInt();
 
                         switch (option) {
-                                case 1:
-                                        var res1 = resource.readAll();
-                                        System.out.println(res1);
-
+                                case 0:
+                                        resource.populate();
                                         break;
+                                case 1:
+                                        sequentialOperationCRUD(sc, resource);
+                                        break;
+
+                                case 5:
+                                        System.out.println("Saindo do programa...");
+                                        sc.close();
+                                        repository.close();
+                                        System.exit(0);
+                                        break;
+                                default:
+                                        System.out.println("Opção inválida. Por favor, escolha uma opção válida.");
+                        }
+                }
+        }
+
+        private static void sequentialOperationCRUD(Scanner sc, RestaurantResource resource) {
+                while (true) { 
+                        System.out.println("\nEscolha uma operação:");
+                        System.out.println("1. Ler todos registros");
+                        System.out.println("2. Ler");
+                        System.out.println("3. Atualizar");
+                        System.out.println("4. Deletar");
+                        System.out.println("5. Trocar forma de operar");
+                        System.out.print("Opção: ");
+                        int option = sc.nextInt();
+                        switch (option) {
                                 case 2:
-                                        System.out.println("Digite o id para ser buscado: ");
+                                        System.out.println("Digite um id para ser sequencialmente buscado: ");
                                         int id = sc.nextInt();
                                         sc.nextLine();
-
+        
                                         var res2 = resource.read(id);
                                         System.out.println(res2);
-
+        
                                         break;
                                 case 3:
                                         System.out.print("Atualize o restaurante de id: ");
                                         int updateId = sc.nextInt();
                                         sc.nextLine();
-
+        
                                         Restaurant updated = createRestaurant(sc);
                                         var res3 = resource.update(updateId, updated);
                                         System.out.println(res3);
-
+        
                                         break;
                                 case 4:
                                         System.out.print("Delete o restaurante de id: ");
@@ -60,14 +88,10 @@ public class Main {
                                         System.out.println("Deletando...");
                                         var res4 = resource.delete(deleteId);
                                         System.out.println(res4);
-                                        
+        
                                         break;
                                 case 5:
-                                        System.out.println("Saindo do programa...");
-                                        sc.close();
-                                        repository.close();
-                                        System.exit(0);
-                                        break;
+                                        return;
                                 default:
                                         System.out.println("Opção inválida. Por favor, escolha uma opção válida.");
                         }
@@ -107,15 +131,6 @@ public class Main {
                 }
                 return new Restaurant(name, categories, postalCode, city, address, latitude, longitude, Instant.now(),
                                 websites);
-        }
-
-        private static void loadMenu() {
-                System.out.println("\nEscolha uma operação:");
-                System.out.println("1. Ler todos registros");
-                System.out.println("2. Ler");
-                System.out.println("3. Atualizar");
-                System.out.println("4. Deletar");
-                System.out.println("5. Sair");
         }
 
         public static List<Restaurant> createRestaurants() {
