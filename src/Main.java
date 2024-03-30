@@ -1,7 +1,9 @@
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 import application.RestaurantServiceImpl;
 import application.resource.ReaderCSV;
@@ -13,10 +15,13 @@ import repository.manager.RestaurantRepositoryImpl;
 public class Main {
 
         public static void main(String[] args) throws Exception {
-
+                Set<String> invertedCity = new HashSet<>();
+                                        invertedCity.add("Orlando");
+                                        invertedCity.add("Atlanta");
+                                        invertedCity.add("Vancouver");
                 var repository = new RestaurantRepositoryImpl(
                                 "src/repository/manager/data/Fast_Food_Restaurants.bin",
-                                new RestaurantPersister(5));
+                                new RestaurantPersister(5), invertedCity);
                 var service = new RestaurantServiceImpl(repository);
                 var resource = new RestaurantResource(service, new ReaderCSV("dataset/Fast_Food_Restaurants.csv"));
 
@@ -39,6 +44,8 @@ public class Main {
                                 case 1:
                                         sequentialOperationCRUD(sc, resource);
                                         break;
+                                case 4:
+                                        break;
 
                                 case 5:
                                         System.out.println("Saindo do programa...");
@@ -53,7 +60,7 @@ public class Main {
         }
 
         private static void sequentialOperationCRUD(Scanner sc, RestaurantResource resource) {
-                while (true) { 
+                while (true) {
                         System.out.println("\nEscolha uma operação:");
                         System.out.println("1. Ler todos registros");
                         System.out.println("2. Ler");
@@ -67,20 +74,20 @@ public class Main {
                                         System.out.println("Digite um id para ser sequencialmente buscado: ");
                                         int id = sc.nextInt();
                                         sc.nextLine();
-        
+
                                         var res2 = resource.read(id);
                                         System.out.println(res2);
-        
+
                                         break;
                                 case 3:
                                         System.out.print("Atualize o restaurante de id: ");
                                         int updateId = sc.nextInt();
                                         sc.nextLine();
-        
+
                                         Restaurant updated = createRestaurant(sc);
                                         var res3 = resource.update(updateId, updated);
                                         System.out.println(res3);
-        
+
                                         break;
                                 case 4:
                                         System.out.print("Delete o restaurante de id: ");
@@ -89,7 +96,7 @@ public class Main {
                                         System.out.println("Deletando...");
                                         var res4 = resource.delete(deleteId);
                                         System.out.println(res4);
-        
+
                                         break;
                                 case 5:
                                         return;

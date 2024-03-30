@@ -1,2 +1,6 @@
 # database files
 /src/repository/manager/data/
+/src/repository/manager/indexer/invertedList/files
+
+# test
+/src/Test.java

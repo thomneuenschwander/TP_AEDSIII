@@ -25,4 +25,8 @@ public interface RestaurantRepository {
   void persistAll(List<Restaurant> restaurants) throws Exception;
 
   List<Restaurant> findAll();
+
+  List<Restaurant> findByCity(String city) throws Exception;
+
+  void test() throws Exception;
 }

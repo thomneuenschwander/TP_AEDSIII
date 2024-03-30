@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,6 +13,7 @@ import domain.Restaurant;
 import domain.exceptions.DuplicateIdException;
 import domain.exceptions.ResourceNotFoundException;
 import repository.RestaurantRepository;
+import repository.manager.indexer.invertedList.InvertedIndexImpl;
 
 /*
     Comments:
@@ -25,6 +27,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
     private final File file;
     private final RandomAccessFile raf;
     private final RestaurantPersister persister;
+    private InvertedIndexImpl invertedCitys;
 
     public RestaurantRepositoryImpl(String binaryFilePath, RestaurantPersister persister)
             throws IOException {
@@ -35,6 +38,13 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         }
         this.raf = new RandomAccessFile(file, "rw");
         writeLastAddedId(-1);
+    }
+
+    public RestaurantRepositoryImpl(String binaryFilePath, RestaurantPersister persister,
+            Collection<String> terms)
+            throws Exception {
+        this(binaryFilePath, persister);
+        this.invertedCitys = new InvertedIndexImpl("indexCity.bin", "indexDataCity.bin", terms);
     }
 
     @Override
@@ -49,6 +59,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
             short recordSize = persister.getRecordLength(restaurant);
             persistRecordWithSize(restaurant, recordSize, file.length());
             writeLastAddedId(restaurant.getId());
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -109,7 +120,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                         persister.writeRecorInStream(raf, updatedRestaurant);
                     } else {
                         raf.writeInt(-1);
-                        persistRecordWithSize(updatedRestaurant, updatedRecordSize,  file.length());
+                        persistRecordWithSize(updatedRestaurant, updatedRecordSize, file.length());
                     }
 
                     break;
@@ -192,13 +203,30 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         }
         return allRestaurants;
     }
-  
+
+    @Override
+    public List<Restaurant> findByCity(String city) throws Exception {
+        // var foundID = invertedCitys.find(city);
+        List<Restaurant> result = new ArrayList<>();
+        // foundID.forEach(x -> {
+        // try {
+        // var restaurant = findById(0).get();
+        // result.add(restaurant);
+        // } catch (Exception e) {
+        // e.printStackTrace();
+        // }
+        // });
+        return result;
+    }
+
+    
+
     private int readLastAddedId() throws IOException {
         raf.seek(0);
         int id = raf.readInt();
         return id;
     }
-    
+
     private void writeLastAddedId(int id) throws IOException {
         raf.seek(0);
         raf.writeInt(id);
@@ -210,5 +238,15 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
             raf.close();
         }
     }
-    
+
+    @Override
+    public void test() throws Exception {
+        invertedCitys.insert("Vancouver", 1623);
+        invertedCitys.insert("Orlando", 226);
+        invertedCitys.insert("Orlando", 539);
+        invertedCitys.insert("Orlando", 560);
+        var found = invertedCitys.find("Orlando");
+        found.forEach(System.out::println);
+        invertedCitys.close();
+    }
 }
