@@ -22,9 +22,9 @@ public class Main {
 
                 Scanner sc = new Scanner(System.in);
                 while (true) {
-                        System.out.println("Escolha uma forma de operar: ");
-                        System.out.println("Tecle '0' para popular o banco de dados");
-                        System.out.println("\n1. Acesso Sequencial");
+                        System.out.println("Escolha uma forma de operar:\n");
+                        System.out.println("Tecle '0' inicializar o banco de dados");
+                        System.out.println("1. Acesso Sequencial");
                         System.out.println("2. Acesso Indexado com Arvore B");
                         System.out.println("3. Acesso Indexado com Hash Table");
                         System.out.println("4. Acesso Indexado com Lista invertida\n");
@@ -34,8 +34,7 @@ public class Main {
 
                         switch (option) {
                                 case 0:
-                                        System.out.println("Populando... ");
-                                        resource.populate();
+                                        dataBaseInitialize(repository, resource);
                                         break;
                                 case 1:
                                         sequentialCRUD(sc, resource);
@@ -43,13 +42,43 @@ public class Main {
                                 case 4:
                                         invertedListCRUD(sc, repository);
                                         break;
-
                                 case 5:
                                         System.out.println("Saindo do programa...");
                                         sc.close();
                                         repository.close();
                                         System.exit(0);
                                         break;
+                                default:
+                                        System.out.println("Opção inválida. Por favor, escolha uma opção válida.");
+                        }
+                }
+        }
+
+        private static void invertedListCRUD(Scanner sc, RestaurantRepository repository) throws Exception {
+                while (true) {
+                        System.out.println("\nLista de indice invertido:\n");
+                        System.out.println("1. Inicializacar lista");
+                        System.out.println("2. Pesquisar por nome");
+                        System.out.println("3. Pesquisar por cidade");
+                        System.out.println("5. Trocar forma de operar");
+                        System.out.print("Opção: ");
+                        int option = sc.nextInt();
+                        sc.nextLine();
+                        switch (option) {
+                                case 2:
+                                        System.out.println("Pesquisar por nomes: ");
+                                        String name = sc.nextLine();
+                                        var res2 = repository.findByName(name);
+                                        res2.forEach(System.out::println);
+                                        break;
+                                case 3:
+                                        System.out.println("Pesquisar por cidade: ");
+                                        String city = sc.nextLine();
+                                        var res3 = repository.findByCity(city);
+                                        res3.forEach(System.out::println);
+                                        break;
+                                case 5:
+                                        return;
                                 default:
                                         System.out.println("Opção inválida. Por favor, escolha uma opção válida.");
                         }
@@ -103,37 +132,18 @@ public class Main {
                 }
         }
 
-        private static void invertedListCRUD(Scanner sc, RestaurantRepository repository) throws Exception {
-                while (true) {
-                        System.out.println("\nLista de indice invertido:\n");
-                        System.out.println("1. Inicializacar lista");
-                        System.out.println("2. Pesquisar");
-                        System.out.println("5. Trocar forma de operar");
-                        System.out.print("Opção: ");
-                        int option = sc.nextInt();
-                        sc.nextLine();
-                        switch (option) {
-                                case 1:
-                                        System.out.println("Inicializando... ");
-                                        repository.initializeInvertedList();
-                                        break;
-                                case 2:
-                                        System.out.println("Pesquisar por nomes: ");
-                                        String name = sc.nextLine();
-                                        var res2 = repository.findByName(name);
-                                        res2.forEach(System.out::println);
-                                        break;
-                                case 3:
-                                        System.out.println("Pesquisar por cidade: ");
-                                        String city = sc.nextLine();
-                                        var res3 = repository.findByCity(city);
-                                        res3.forEach(System.out::println);
-                                        break;
-                                case 5:
-                                        return;
-                                default:
-                                        System.out.println("Opção inválida. Por favor, escolha uma opção válida.");
-                        }
+        private static void dataBaseInitialize(RestaurantRepository repository, RestaurantResource resource) {
+                try {
+                        long startTime = System.currentTimeMillis();
+                        System.out.println("Populando... ");
+                        resource.populate();
+                        System.out.println("Inicializando indices invertidos... ");
+                        repository.initializeInvertedList();      
+                        long endTime = System.currentTimeMillis();
+                        long milliseconds = endTime - startTime;
+                        System.out.println("timestamp: "+((double) milliseconds / 1000.0)+"s");
+                } catch (Exception e) {
+                        e.printStackTrace();
                 }
         }
 

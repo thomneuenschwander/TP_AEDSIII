@@ -40,16 +40,8 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         this.raf = new RandomAccessFile(file, "rw");
         writeLastAddedId(-1);
 
-        List<String> invertedCitys = new ArrayList<>();
-        invertedCitys.add("Orlando");
-        invertedCitys.add("Atlanta");
-        invertedCitys.add("Vancouver");
-        invertedCitys.add("Thibodaux");
-        this.invertedCitys = new InvertedIndexImpl("index_" + "city" + ".bin", "data_" + "city" + ".bin", invertedCitys);
-
-        List<String> invertedNames = new ArrayList<>();
-        invertedNames.add("Taco Bell");
-        this.invertedNames = new InvertedIndexImpl("index_" + "name" + ".bin", "data_" + "name" + ".bin", invertedNames);
+        this.invertedCitys = new InvertedIndexImpl("index_" + "city" + ".bin", "data_" + "city" + ".bin");
+        this.invertedNames = new InvertedIndexImpl("index_" + "name" + ".bin", "data_" + "name" + ".bin");
     }
 
     @Override
@@ -183,6 +175,16 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                 }
             });
 
+            List<String> cityTerms = new ArrayList<>();
+            cityTerms.add("Orlando");
+            cityTerms.add("Atlanta");
+            cityTerms.add("Vancouver");
+            cityTerms.add("Thibodaux");
+            this.invertedCitys.initializeIndexes(cityTerms);
+
+            List<String> nameTerms = new ArrayList<>();
+            nameTerms.add("Taco Bell");
+            this.invertedNames.initializeIndexes(nameTerms);
         } catch (Exception e) {
             e.printStackTrace();
         }

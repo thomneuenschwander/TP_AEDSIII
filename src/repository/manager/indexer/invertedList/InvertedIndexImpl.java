@@ -13,16 +13,15 @@ public class InvertedIndexImpl {
     private RandomAccessFile indexRAF;
     private RandomAccessFile dataRAF;
 
-    public InvertedIndexImpl(String indexFileName, String dataRAFName, Collection<String> terms) throws IOException {
+    public InvertedIndexImpl(String indexFileName, String dataRAFName) throws IOException {
         final String currentDir = "src/repository/manager/indexer/invertedList/files/";
         this.indexFile = new File(currentDir+indexFileName);
         this.dataFile = new File(currentDir+dataRAFName);
         this.indexRAF = new RandomAccessFile(this.indexFile, "rw");
         this.dataRAF = new RandomAccessFile(this.dataFile, "rw");
-        initializeIndexes(terms);
     }
 
-    private void initializeIndexes(Collection<String> terms) throws IOException {
+    public void initializeIndexes(Collection<String> terms) throws IOException {
         indexRAF.seek(0);
         for (String key : terms) {
             indexRAF.writeUTF(key.toUpperCase());
