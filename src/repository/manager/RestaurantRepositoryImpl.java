@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +27,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
     private final RandomAccessFile raf;
     private final RestaurantPersister persister;
     private InvertedIndexImpl invertedCitys;
-    private InvertedIndexImpl invertedName;
+    private InvertedIndexImpl invertedNames;
 
     public RestaurantRepositoryImpl(String dataFileName, RestaurantPersister persister)
             throws IOException {
@@ -47,6 +46,10 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         invertedCitys.add("Vancouver");
         invertedCitys.add("Thibodaux");
         this.invertedCitys = new InvertedIndexImpl("index_" + "city" + ".bin", "data_" + "city" + ".bin", invertedCitys);
+
+        List<String> invertedNames = new ArrayList<>();
+        invertedNames.add("Taco Bell");
+        this.invertedNames = new InvertedIndexImpl("index_" + "name" + ".bin", "data_" + "name" + ".bin", invertedNames);
     }
 
     @Override
@@ -216,6 +219,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                     raf.readShort();
                     var restaurant = persister.readRestaurantFromStream(raf);
                     invertedCitys.insert(restaurant.getCity().toUpperCase(), restaurant.getId());
+                    invertedNames.insert(restaurant.getName().toUpperCase(), restaurant.getId());
                 } catch (EOFException e) {
                     break;
                 }
@@ -226,11 +230,29 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
     }
 
     @Override
-    public List<Restaurant> findByQuery(String query) throws Exception {
-        String key = query.toUpperCase();
+    public List<Restaurant> findByCity(String city) throws Exception {
+        String key = city.toUpperCase();
         List<Restaurant> result = new ArrayList<>();
         if (invertedCitys != null) {
             var foundID = invertedCitys.find(key);
+            foundID.forEach(x -> {
+                try {
+                    Restaurant restaurant = findById(x).get();
+                    result.add(restaurant);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+        return result;
+    }
+
+    @Override
+    public List<Restaurant> findByName(String name) throws Exception {
+        String key = name.toUpperCase();
+        List<Restaurant> result = new ArrayList<>();
+        if (invertedNames != null) {
+            var foundID = invertedNames.find(key);
             foundID.forEach(x -> {
                 try {
                     Restaurant restaurant = findById(x).get();

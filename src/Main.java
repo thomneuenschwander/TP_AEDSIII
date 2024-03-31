@@ -118,10 +118,16 @@ public class Main {
                                         repository.initializeInvertedList();
                                         break;
                                 case 2:
-                                        System.out.println("Escreva uma pesquisa: ");
-                                        String query = sc.nextLine();
-                                        var res2 = repository.findByQuery(query);
+                                        System.out.println("Pesquisar por nomes: ");
+                                        String name = sc.nextLine();
+                                        var res2 = repository.findByName(name);
                                         res2.forEach(System.out::println);
+                                        break;
+                                case 3:
+                                        System.out.println("Pesquisar por cidade: ");
+                                        String city = sc.nextLine();
+                                        var res3 = repository.findByCity(city);
+                                        res3.forEach(System.out::println);
                                         break;
                                 case 5:
                                         return;
