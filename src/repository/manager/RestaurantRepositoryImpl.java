@@ -28,23 +28,25 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
     private final RandomAccessFile raf;
     private final RestaurantPersister persister;
     private InvertedIndexImpl invertedCitys;
+    private InvertedIndexImpl invertedName;
 
-    public RestaurantRepositoryImpl(String binaryFilePath, RestaurantPersister persister)
+    public RestaurantRepositoryImpl(String dataFileName, RestaurantPersister persister)
             throws IOException {
+        final String dir = "src/repository/manager/data/";
+        this.file = new File(dir + dataFileName);
         this.persister = persister;
-        this.file = new File(binaryFilePath);
         if (!this.file.exists()) {
             this.file.createNewFile();
         }
         this.raf = new RandomAccessFile(file, "rw");
         writeLastAddedId(-1);
-    }
 
-    public RestaurantRepositoryImpl(String binaryFilePath, RestaurantPersister persister,
-            Collection<String> terms)
-            throws Exception {
-        this(binaryFilePath, persister);
-        this.invertedCitys = new InvertedIndexImpl("indexCity.bin", "indexDataCity.bin", terms);
+        List<String> invertedCitys = new ArrayList<>();
+        invertedCitys.add("Orlando");
+        invertedCitys.add("Atlanta");
+        invertedCitys.add("Vancouver");
+        invertedCitys.add("Thibodaux");
+        this.invertedCitys = new InvertedIndexImpl("index_" + "city" + ".bin", "data_" + "city" + ".bin", invertedCitys);
     }
 
     @Override
@@ -205,21 +207,41 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
     }
 
     @Override
-    public List<Restaurant> findByCity(String city) throws Exception {
-        // var foundID = invertedCitys.find(city);
-        List<Restaurant> result = new ArrayList<>();
-        // foundID.forEach(x -> {
-        // try {
-        // var restaurant = findById(0).get();
-        // result.add(restaurant);
-        // } catch (Exception e) {
-        // e.printStackTrace();
-        // }
-        // });
-        return result;
+    public void initializeInvertedList() throws IOException {
+        try {
+            raf.seek(0);
+            raf.skipBytes(Integer.BYTES);
+            while (true) {
+                try {
+                    raf.readShort();
+                    var restaurant = persister.readRestaurantFromStream(raf);
+                    invertedCitys.insert(restaurant.getCity().toUpperCase(), restaurant.getId());
+                } catch (EOFException e) {
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    
+    @Override
+    public List<Restaurant> findByQuery(String query) throws Exception {
+        String key = query.toUpperCase();
+        List<Restaurant> result = new ArrayList<>();
+        if (invertedCitys != null) {
+            var foundID = invertedCitys.find(key);
+            foundID.forEach(x -> {
+                try {
+                    Restaurant restaurant = findById(x).get();
+                    result.add(restaurant);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+        return result;
+    }
 
     private int readLastAddedId() throws IOException {
         raf.seek(0);

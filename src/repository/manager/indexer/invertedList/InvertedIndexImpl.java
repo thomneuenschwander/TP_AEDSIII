@@ -25,7 +25,7 @@ public class InvertedIndexImpl {
     private void initializeIndexes(Collection<String> terms) throws IOException {
         indexRAF.seek(0);
         for (String key : terms) {
-            indexRAF.writeUTF(key);
+            indexRAF.writeUTF(key.toUpperCase());
             indexRAF.writeLong(-1);
         }
     }

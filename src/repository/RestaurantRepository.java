@@ -1,5 +1,7 @@
 package repository;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +28,10 @@ public interface RestaurantRepository {
 
   List<Restaurant> findAll();
 
-  List<Restaurant> findByCity(String city) throws Exception;
+  void initializeInvertedList() throws IOException;
+
+  // Function<Integer, Restaurant> dataSearchFunc
+  List<Restaurant> findByQuery(String query) throws Exception;
 
   void test() throws Exception;
 }

@@ -1,27 +1,22 @@
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
 
 import application.RestaurantServiceImpl;
 import application.resource.ReaderCSV;
 import application.resource.RestaurantResource;
 import domain.Restaurant;
+import repository.RestaurantRepository;
 import repository.manager.RestaurantPersister;
 import repository.manager.RestaurantRepositoryImpl;
 
 public class Main {
 
         public static void main(String[] args) throws Exception {
-                Set<String> invertedCity = new HashSet<>();
-                                        invertedCity.add("Orlando");
-                                        invertedCity.add("Atlanta");
-                                        invertedCity.add("Vancouver");
                 var repository = new RestaurantRepositoryImpl(
-                                "src/repository/manager/data/Fast_Food_Restaurants.bin",
-                                new RestaurantPersister(5), invertedCity);
+                                "Fast_Food_Restaurants.bin",
+                                new RestaurantPersister(5));
                 var service = new RestaurantServiceImpl(repository);
                 var resource = new RestaurantResource(service, new ReaderCSV("dataset/Fast_Food_Restaurants.csv"));
 
@@ -39,12 +34,14 @@ public class Main {
 
                         switch (option) {
                                 case 0:
+                                        System.out.println("Populando... ");
                                         resource.populate();
                                         break;
                                 case 1:
-                                        sequentialOperationCRUD(sc, resource);
+                                        sequentialCRUD(sc, resource);
                                         break;
                                 case 4:
+                                        invertedListCRUD(sc, repository);
                                         break;
 
                                 case 5:
@@ -59,9 +56,9 @@ public class Main {
                 }
         }
 
-        private static void sequentialOperationCRUD(Scanner sc, RestaurantResource resource) {
+        private static void sequentialCRUD(Scanner sc, RestaurantResource resource) {
                 while (true) {
-                        System.out.println("\nEscolha uma operação:");
+                        System.out.println("\nSequencial:");
                         System.out.println("1. Ler todos registros");
                         System.out.println("2. Ler");
                         System.out.println("3. Atualizar");
@@ -97,6 +94,34 @@ public class Main {
                                         var res4 = resource.delete(deleteId);
                                         System.out.println(res4);
 
+                                        break;
+                                case 5:
+                                        return;
+                                default:
+                                        System.out.println("Opção inválida. Por favor, escolha uma opção válida.");
+                        }
+                }
+        }
+
+        private static void invertedListCRUD(Scanner sc, RestaurantRepository repository) throws Exception {
+                while (true) {
+                        System.out.println("\nLista de indice invertido:\n");
+                        System.out.println("1. Inicializacar lista");
+                        System.out.println("2. Pesquisar");
+                        System.out.println("5. Trocar forma de operar");
+                        System.out.print("Opção: ");
+                        int option = sc.nextInt();
+                        sc.nextLine();
+                        switch (option) {
+                                case 1:
+                                        System.out.println("Inicializando... ");
+                                        repository.initializeInvertedList();
+                                        break;
+                                case 2:
+                                        System.out.println("Escreva uma pesquisa: ");
+                                        String query = sc.nextLine();
+                                        var res2 = repository.findByQuery(query);
+                                        res2.forEach(System.out::println);
                                         break;
                                 case 5:
                                         return;
