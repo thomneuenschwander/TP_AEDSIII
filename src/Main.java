@@ -22,7 +22,6 @@ public class Main {
 
                 Scanner sc = new Scanner(System.in);
                 while (true) {
-                        System.out.println("Escolha uma forma de operar:\n");
                         System.out.println("Tecle '0' inicializar o banco de dados");
                         System.out.println("1. Acesso Sequencial");
                         System.out.println("2. Acesso Indexado com Arvore B");
@@ -57,7 +56,6 @@ public class Main {
         private static void invertedListCRUD(Scanner sc, RestaurantRepository repository) throws Exception {
                 while (true) {
                         System.out.println("\nLista de indice invertido:\n");
-                        System.out.println("1. Inicializacar lista");
                         System.out.println("2. Pesquisar por nome");
                         System.out.println("3. Pesquisar por cidade");
                         System.out.println("5. Trocar forma de operar");
@@ -141,7 +139,7 @@ public class Main {
                         repository.initializeInvertedList();      
                         long endTime = System.currentTimeMillis();
                         long milliseconds = endTime - startTime;
-                        System.out.println("timestamp: "+((double) milliseconds / 1000.0)+"s");
+                        System.out.println("timestamp: "+((double) milliseconds / 1000.0)+" s");
                 } catch (Exception e) {
                         e.printStackTrace();
                 }

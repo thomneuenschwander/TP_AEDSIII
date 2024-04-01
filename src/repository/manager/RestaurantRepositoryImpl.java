@@ -12,7 +12,7 @@ import domain.Restaurant;
 import domain.exceptions.DuplicateIdException;
 import domain.exceptions.ResourceNotFoundException;
 import repository.RestaurantRepository;
-import repository.manager.indexer.invertedList.InvertedIndexImpl;
+import repository.manager.indexer.invertedList.InvertedIndex;
 
 /*
     Comments:
@@ -26,8 +26,8 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
     private final File file;
     private final RandomAccessFile raf;
     private final RestaurantPersister persister;
-    private InvertedIndexImpl invertedCitys;
-    private InvertedIndexImpl invertedNames;
+    private InvertedIndex invertedCitys;
+    private InvertedIndex invertedNames;
 
     public RestaurantRepositoryImpl(String dataFileName, RestaurantPersister persister)
             throws IOException {
@@ -40,8 +40,8 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         this.raf = new RandomAccessFile(file, "rw");
         writeLastAddedId(-1);
 
-        this.invertedCitys = new InvertedIndexImpl("index_" + "city" + ".bin", "data_" + "city" + ".bin");
-        this.invertedNames = new InvertedIndexImpl("index_" + "name" + ".bin", "data_" + "name" + ".bin");
+        this.invertedCitys = new InvertedIndex("index_" + "city" + ".bin", "data_" + "city" + ".bin");
+        this.invertedNames = new InvertedIndex("index_" + "name" + ".bin", "data_" + "name" + ".bin");
     }
 
     @Override
