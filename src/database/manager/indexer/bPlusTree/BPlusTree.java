@@ -1,11 +1,11 @@
-package repository.manager.indexer.bPlusTree;
+package database.manager.indexer.bPlusTree;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import repository.manager.indexer.Index;
+import database.manager.indexer.Index;
 
 public class BPlusTree {
     private RandomAccessFile raf;

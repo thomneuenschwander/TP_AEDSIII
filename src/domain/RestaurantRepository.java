@@ -1,10 +1,7 @@
-package repository;
+package domain;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-
-import domain.Restaurant;
 
 /*
     Responsibilities:
@@ -27,7 +24,7 @@ public interface RestaurantRepository {
 
   List<Restaurant> findAll();
 
-  void initializeInvertedList() throws IOException;
+  void initializeDatabase(List<Restaurant> restaurants) throws Exception;
 
   List<Restaurant> findByName(String name) throws Exception;
 

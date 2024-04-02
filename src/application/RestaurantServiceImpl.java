@@ -3,10 +3,10 @@ package application;
 import java.util.List;
 
 import domain.Restaurant;
+import domain.RestaurantRepository;
 import domain.RestaurantService;
 import domain.exceptions.InvalidValueException;
 import domain.exceptions.ResourceNotFoundException;
-import repository.RestaurantRepository;
 
 public class RestaurantServiceImpl implements RestaurantService {
 

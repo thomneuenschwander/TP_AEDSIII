@@ -1,7 +1,6 @@
-package repository.manager;
+package database.manager;
 
 import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -11,55 +10,35 @@ import java.util.Optional;
 import domain.Restaurant;
 import domain.exceptions.DuplicateIdException;
 import domain.exceptions.ResourceNotFoundException;
-import repository.RestaurantRepository;
-import repository.manager.indexer.invertedList.InvertedIndex;
 
-/*
-    Comments:
-
-    - Negative ID represents logical Deletion. (gravestone)
-    - Date persistence: milliseconds since the Unix epoch. [January 1, 1970, 00:00:00 GMT]
-*/
-
-public class RestaurantRepositoryImpl implements RestaurantRepository, AutoCloseable {
-
-    private final File file;
+public class SequentialAcess {
     private final RandomAccessFile raf;
-    private final RestaurantPersister persister;
-    private InvertedIndex invertedCitys;
-    private InvertedIndex invertedNames;
+    private final RestaurantSerializeble persister;
 
-    public RestaurantRepositoryImpl(String dataFileName, RestaurantPersister persister)
-            throws IOException {
-        final String dir = "src/repository/manager/data/";
-        this.file = new File(dir + dataFileName);
-        this.persister = persister;
-        if (!this.file.exists()) {
-            this.file.createNewFile();
-        }
-        this.raf = new RandomAccessFile(file, "rw");
-        writeLastAddedId(-1);
-
-        this.invertedCitys = new InvertedIndex("index_" + "city" + ".bin", "data_" + "city" + ".bin");
-        this.invertedNames = new InvertedIndex("index_" + "name" + ".bin", "data_" + "name" + ".bin");
+    public SequentialAcess(String dataFileName) throws IOException {
+        final String dir = "src/database/manager/data/";
+        this.raf = new RandomAccessFile(dir + dataFileName, "rw");
+        this.persister = new RestaurantSerializeble(5);
+        writeLastIDHeader(-1);
     }
 
-    @Override
-    public void save(Restaurant restaurant) throws Exception {
-        int lastAddedId = readLastAddedId();
-        if (restaurant.getId() >= 0 && restaurant.getId() <= lastAddedId) {
-            throw new DuplicateIdException(restaurant.getId());
-        } else if (restaurant.getId() < 0) {
-            restaurant.setId(++lastAddedId);
-        }
+    public long save(Restaurant restaurant) throws Exception {
         try {
+            int lastID = readLastIDHeader();
+            if (restaurant.getId() >= 0 && restaurant.getId() <= lastID) {
+                throw new DuplicateIdException(restaurant.getId());
+            } else if (restaurant.getId() < 0) {
+                restaurant.setId(++lastID);
+            }
             short recordSize = persister.getRecordLength(restaurant);
-            persistRecordWithSize(restaurant, recordSize, file.length());
-            writeLastAddedId(restaurant.getId());
-
+            long recordOffset = raf.length();
+            persistRecordWithSize(restaurant, recordSize, recordOffset);
+            writeLastIDHeader(restaurant.getId());
+            return recordOffset;
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return -1;
     }
 
     private void persistRecordWithSize(Restaurant restaurant, short size, long address) throws IOException {
@@ -68,7 +47,6 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         persister.writeRecorInStream(raf, restaurant);
     }
 
-    @Override
     public Optional<Restaurant> findById(int id) throws Exception {
         raf.seek(0);
         raf.skipBytes(Integer.BYTES);
@@ -94,7 +72,6 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         return Optional.empty();
     }
 
-    @Override
     public boolean update(Restaurant updatedRestaurant) throws Exception {
         raf.seek(0);
         raf.skipBytes(Integer.BYTES);
@@ -117,7 +94,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                         persister.writeRecorInStream(raf, updatedRestaurant);
                     } else {
                         raf.writeInt(-1);
-                        persistRecordWithSize(updatedRestaurant, updatedRecordSize, file.length());
+                        persistRecordWithSize(updatedRestaurant, updatedRecordSize, raf.length());
                     }
 
                     break;
@@ -133,7 +110,6 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         return found;
     }
 
-    @Override
     public void delete(int id) throws Exception {
         raf.seek(0);
         raf.skipBytes(Integer.BYTES);
@@ -164,7 +140,6 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         }
     }
 
-    @Override
     public void persistAll(List<Restaurant> restaurants) throws Exception {
         try {
             restaurants.forEach(restaurant -> {
@@ -174,23 +149,11 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
                     e.printStackTrace();
                 }
             });
-
-            List<String> cityTerms = new ArrayList<>();
-            cityTerms.add("Orlando");
-            cityTerms.add("Atlanta");
-            cityTerms.add("Vancouver");
-            cityTerms.add("Thibodaux");
-            this.invertedCitys.initializeIndexes(cityTerms);
-
-            List<String> nameTerms = new ArrayList<>();
-            nameTerms.add("Taco Bell");
-            this.invertedNames.initializeIndexes(nameTerms);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    @Override
     public List<Restaurant> findAll() {
         List<Restaurant> allRestaurants = new ArrayList<>();
         try {
@@ -211,88 +174,14 @@ public class RestaurantRepositoryImpl implements RestaurantRepository, AutoClose
         return allRestaurants;
     }
 
-    @Override
-    public void initializeInvertedList() throws IOException {
-        try {
-            raf.seek(0);
-            raf.skipBytes(Integer.BYTES);
-            while (true) {
-                try {
-                    raf.readShort();
-                    var restaurant = persister.readRestaurantFromStream(raf);
-                    invertedCitys.insert(restaurant.getCity().toUpperCase(), restaurant.getId());
-                    invertedNames.insert(restaurant.getName().toUpperCase(), restaurant.getId());
-                } catch (EOFException e) {
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public List<Restaurant> findByCity(String city) throws Exception {
-        String key = city.toUpperCase();
-        List<Restaurant> result = new ArrayList<>();
-        if (invertedCitys != null) {
-            var foundID = invertedCitys.find(key);
-            foundID.forEach(x -> {
-                try {
-                    Restaurant restaurant = findById(x).get();
-                    result.add(restaurant);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-        return result;
-    }
-
-    @Override
-    public List<Restaurant> findByName(String name) throws Exception {
-        String key = name.toUpperCase();
-        List<Restaurant> result = new ArrayList<>();
-        if (invertedNames != null) {
-            var foundID = invertedNames.find(key);
-            foundID.forEach(x -> {
-                try {
-                    Restaurant restaurant = findById(x).get();
-                    result.add(restaurant);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-        return result;
-    }
-
-    private int readLastAddedId() throws IOException {
+    private int readLastIDHeader() throws IOException {
         raf.seek(0);
         int id = raf.readInt();
         return id;
     }
 
-    private void writeLastAddedId(int id) throws IOException {
+    private void writeLastIDHeader(int id) throws IOException {
         raf.seek(0);
         raf.writeInt(id);
-    }
-
-    @Override
-    public void close() throws Exception {
-        if (raf != null) {
-            raf.close();
-        }
-    }
-
-    @Override
-    public void test() throws Exception {
-        invertedCitys.insert("Vancouver", 1623);
-        invertedCitys.insert("Orlando", 226);
-        invertedCitys.insert("Orlando", 539);
-        invertedCitys.insert("Orlando", 560);
-        var found = invertedCitys.find("Orlando");
-        found.forEach(System.out::println);
-        invertedCitys.close();
     }
 }

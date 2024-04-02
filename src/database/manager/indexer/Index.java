@@ -1,4 +1,4 @@
-package repository.manager.indexer;
+package database.manager.indexer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;

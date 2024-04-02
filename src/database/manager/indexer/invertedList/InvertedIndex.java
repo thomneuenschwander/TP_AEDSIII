@@ -1,4 +1,4 @@
-package repository.manager.indexer.invertedList;
+package database.manager.indexer.invertedList;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -11,7 +11,7 @@ public class InvertedIndex {
     private RandomAccessFile dataRAF;
 
     public InvertedIndex(String indexFileName, String dataRAFName) throws IOException {
-        final String currentDir = "src/repository/manager/indexer/invertedList/files/";
+        final String currentDir = "src/database/manager/indexer/invertedList/files/";
         this.indexRAF = new RandomAccessFile(currentDir + indexFileName, "rw");
         this.dataRAF = new RandomAccessFile(currentDir + dataRAFName, "rw");
     }

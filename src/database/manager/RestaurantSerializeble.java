@@ -1,4 +1,4 @@
-package repository.manager;
+package database.manager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
@@ -10,10 +10,10 @@ import java.time.Instant;
 
 import domain.Restaurant;
 
-public class RestaurantPersister {
+public class RestaurantSerializeble {
     private final int LENGTH_STRING_FIXED;
 
-    public RestaurantPersister(int LENGTH_STRING_FIXED) {
+    public RestaurantSerializeble(int LENGTH_STRING_FIXED) {
         this.LENGTH_STRING_FIXED = LENGTH_STRING_FIXED;
     }
 

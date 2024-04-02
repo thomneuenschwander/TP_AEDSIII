@@ -6,19 +6,17 @@ import java.util.Scanner;
 import application.RestaurantServiceImpl;
 import application.resource.ReaderCSV;
 import application.resource.RestaurantResource;
+import database.RestaurantRepositoryImpl;
 import domain.Restaurant;
-import repository.RestaurantRepository;
-import repository.manager.RestaurantPersister;
-import repository.manager.RestaurantRepositoryImpl;
+import domain.RestaurantRepository;
 
 public class Main {
+        public static ReaderCSV reader = new ReaderCSV("dataset/Fast_Food_Restaurants.csv");
 
         public static void main(String[] args) throws Exception {
-                var repository = new RestaurantRepositoryImpl(
-                                "Fast_Food_Restaurants.bin",
-                                new RestaurantPersister(5));
+                var repository = new RestaurantRepositoryImpl();
                 var service = new RestaurantServiceImpl(repository);
-                var resource = new RestaurantResource(service, new ReaderCSV("dataset/Fast_Food_Restaurants.csv"));
+                var resource = new RestaurantResource(service);
 
                 Scanner sc = new Scanner(System.in);
                 while (true) {
@@ -33,7 +31,7 @@ public class Main {
 
                         switch (option) {
                                 case 0:
-                                        dataBaseInitialize(repository, resource);
+                                        dataBaseInitialize(repository);
                                         break;
                                 case 1:
                                         sequentialCRUD(sc, resource);
@@ -44,7 +42,6 @@ public class Main {
                                 case 5:
                                         System.out.println("Saindo do programa...");
                                         sc.close();
-                                        repository.close();
                                         System.exit(0);
                                         break;
                                 default:
@@ -130,13 +127,12 @@ public class Main {
                 }
         }
 
-        private static void dataBaseInitialize(RestaurantRepository repository, RestaurantResource resource) {
+        private static void dataBaseInitialize(RestaurantRepository repository) {
                 try {
+                        System.out.println("Inicializando banco de dados... ");
+                        List<Restaurant> firstCharge = reader.readFile();
                         long startTime = System.currentTimeMillis();
-                        System.out.println("Populando... ");
-                        resource.populate();
-                        System.out.println("Inicializando indices invertidos... ");
-                        repository.initializeInvertedList();      
+                        repository.initializeDatabase(firstCharge);     
                         long endTime = System.currentTimeMillis();
                         long milliseconds = endTime - startTime;
                         System.out.println("timestamp: "+((double) milliseconds / 1000.0)+" s");

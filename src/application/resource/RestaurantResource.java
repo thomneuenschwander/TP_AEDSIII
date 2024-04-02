@@ -19,22 +19,12 @@ public class RestaurantResource {
 
     private final RestaurantService service;
 
-    private final ReaderCSV readerCSV;
-
-    public RestaurantResource(RestaurantService service, ReaderCSV readerCSV) {
+    public RestaurantResource(RestaurantService service) {
         this.service = service;
-        this.readerCSV = readerCSV;
     }
 
-    public void populate() {
-        try {
-            var read = readerCSV.readFile();
-            service.saveAll(read);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void persistAll(List<Restaurant> restaurants) throws Exception {
+        service.saveAll(restaurants);
     }
 
     public Response<Restaurant> update(int id, Restaurant updated) {

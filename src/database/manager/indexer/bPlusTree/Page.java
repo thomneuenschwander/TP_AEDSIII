@@ -1,11 +1,11 @@
-package repository.manager.indexer.bPlusTree;
+package database.manager.indexer.bPlusTree;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import repository.manager.indexer.Index;
+import database.manager.indexer.Index;
 
 public class Page {
     public final int BYTES;
