@@ -1,6 +1,5 @@
 package application.resource;
 
-import java.io.IOException;
 import java.util.List;
 
 import domain.Restaurant;

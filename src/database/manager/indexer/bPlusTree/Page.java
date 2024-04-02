@@ -5,7 +5,7 @@ import java.io.DataInput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import database.manager.indexer.Index;
+import database.manager.indexer.index.DirectIndex;
 
 public class Page {
     public final int BYTES;
@@ -13,7 +13,7 @@ public class Page {
     private short order;
     public final int maxNumOfIndexes;
     private short currNumOfIndexes;
-    private Index[] indexes;
+    private DirectIndex[] indexes;
     private long[] pointers;
     private long nextNodePointer;
 
@@ -22,10 +22,10 @@ public class Page {
         this.order = orderTree;
         this.currNumOfIndexes = 0;
         this.pointers = new long[order];
-        this.indexes = new Index[maxNumOfIndexes];
+        this.indexes = new DirectIndex[maxNumOfIndexes];
         this.BYTES = (Long.BYTES * order) + (indexBYTES * maxNumOfIndexes) + Short.BYTES;
         for (int i = 0; i < maxNumOfIndexes; i++) {
-            this.indexes[i] = new Index();
+            this.indexes[i] = new DirectIndex();
             this.pointers[i] = -1;
         }
         this.pointers[order-1] = -1;
@@ -43,7 +43,7 @@ public class Page {
         this.currNumOfIndexes = in.readShort();
         for(int i = 0; i < maxNumOfIndexes; i++){
             this.pointers[i] = in.readLong();
-            this.indexes[i] = Index.readFromStream(in);
+            this.indexes[i] = DirectIndex.readFromStream(in);
         }
         this.pointers[maxNumOfIndexes] = in.readLong();
         this.nextNodePointer = in.readLong();
@@ -70,7 +70,7 @@ public class Page {
         out.writeLong(pointers[currNumOfIndexes]);
 
         for (int i = currNumOfIndexes; i < maxNumOfIndexes; i++) {
-            Index.writeInStream(out, new Index());
+            DirectIndex.writeInStream(out, new DirectIndex());
             out.writeLong(pointers[i + 1]);
         }
         out.writeLong(nextNodePointer);
@@ -102,7 +102,7 @@ public class Page {
         this.nextNodePointer = nextNodePointer;
     }
 
-    public Index[] getIndexes() {
+    public DirectIndex[] getIndexes() {
         return indexes;
     }
 
@@ -114,7 +114,7 @@ public class Page {
         this.pointers = pointers;
     }
 
-    public void setIndexes(Index[] indexes) {
+    public void setIndexes(DirectIndex[] indexes) {
         this.indexes = indexes;
     }
 

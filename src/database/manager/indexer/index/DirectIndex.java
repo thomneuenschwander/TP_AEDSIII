@@ -1,4 +1,4 @@
-package database.manager.indexer;
+package database.manager.indexer.index;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
@@ -6,20 +6,20 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class Index {
+public class DirectIndex {
     public final int BYTES = Integer.BYTES + Long.BYTES;
     private int id;
     private long offset;
 
-    public Index() {
+    public DirectIndex() {
         this(-1, -1);
     }
 
-    public Index(int id){
+    public DirectIndex(int id){
         this(id, -1);
     }
 
-    public Index(int id, long offset) {
+    public DirectIndex(int id, long offset) {
         this.id = id;
         this.offset = offset;
     }
@@ -32,13 +32,13 @@ public class Index {
         return ba.toByteArray();
     }
 
-    public static Index readFromStream(DataInput in) throws IOException {
+    public static DirectIndex readFromStream(DataInput in) throws IOException {
         int id = in.readInt();
         long offset = in.readLong();
-        return new Index(id, offset);
+        return new DirectIndex(id, offset);
     }
 
-    public static void writeInStream(DataOutput out, Index index) throws IOException {
+    public static void writeInStream(DataOutput out, DirectIndex index) throws IOException {
         out.writeInt(index.getId());
         out.writeLong(index.getOffset());
     }
