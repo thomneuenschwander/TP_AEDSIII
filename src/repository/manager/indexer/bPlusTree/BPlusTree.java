@@ -5,6 +5,8 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import repository.manager.indexer.Index;
+
 public class BPlusTree {
     private RandomAccessFile raf;
     private short order;
@@ -18,19 +20,28 @@ public class BPlusTree {
         }
     }
 
-    public List<Integer> find(int id) throws IOException {
-        List<Integer> found = new ArrayList<>();
+    public List<Index> find(int id) throws IOException {
+        List<Index> found = new ArrayList<>();
         long rootOffset = getRootOffset();
-        return null;
+        find(id, rootOffset, found);
+        return found;
     }
 
-    public List<Integer> find(int id, long pageOffset) throws IOException {
-
-
+    public void find(int id, long pageOffset, List<Index> found) throws IOException {
         raf.seek(pageOffset);
-        Page page = new Page(order, raf);
+        Page page = new Page(this.order, this.raf);
+        Index[] pageIndexes = page.getIndexes();
+        long[] childrens = page.getPointers();;
 
-        return null;
+        int i = 0;
+        for(; i < page.getCurrNumOfIndexes() && pageIndexes[i].getId() > id; i++);
+
+        if(page.isLeaf() && pageIndexes[i].getId() == id){
+            found.add(pageIndexes[i]);
+
+        }else{
+            find(id, childrens[i], found);
+        }
     }
 
     private long getRootOffset() throws IOException {

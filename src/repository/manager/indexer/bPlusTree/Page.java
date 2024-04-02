@@ -53,6 +53,10 @@ public class Page {
         return pointers[0] == -1;
     }
 
+    public boolean hasNextPage(){
+        return nextNodePointer != -1;
+    }
+
     protected byte[] toByteArray() throws IOException {
         ByteArrayOutputStream ba = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(ba);
