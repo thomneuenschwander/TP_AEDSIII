@@ -1,23 +1,24 @@
 import java.time.Instant;
 
-import application.RestaurantRecord;
+import application.Restaurant;
 import database.algorithms.SequentialAcess;
+import database.algorithms.bPlusTree.BPlusTreePK_FK;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        RestaurantRecord res = new RestaurantRecord("Restaurante A", new String[] { "Categoria A", "Categoria B" },
+        Restaurant res = new Restaurant("Restaurante A", new String[] { "Categoria A", "Categoria B" },
                 "12345", "Cidade A", "Endereço A", 40.1234, -74.5678,
                 Instant.now(), new String[] { "http://site-a.com", "http://site-b.com" });
 
-        RestaurantRecord res2 = new RestaurantRecord("adassdadsA", new String[] { "Categoria A", "Categoria B" },
+        Restaurant res2 = new Restaurant("adassdadsA", new String[] { "Categoria A", "Categoria B" },
                 "12345", "Cidade A", "Endereço A", 40.1234, -74.5678,
                 Instant.now(), new String[] { "http://site-a.com", "http://site-b.com" });
 
-        SequentialAcess<RestaurantRecord> seq = new SequentialAcess<>("dd.db",
-                RestaurantRecord.class.getConstructor());
+        SequentialAcess<Restaurant> seq = new SequentialAcess<>("dd.db",
+                Restaurant.class.getConstructor());
 
-        seq.save(res);
-
-
+        BPlusTreePK_FK b = new BPlusTreePK_FK(4, "arv.db");
+        //b.save(7, 20);
+        b.find(7).stream().forEach(System.out::println);
     }
 }

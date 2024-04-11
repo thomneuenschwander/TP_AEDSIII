@@ -2,50 +2,90 @@ package database.domain.algorithms;
 
 import java.io.IOException;
 
-public interface Page {
-    void insertKeys(int c1, int c2, long pageRef, int index);
+public abstract class Page<T, K> {
+    public final int sizeBytes;
+    protected final int order;
+    protected short currElements;
+    protected T[] pk;
+    protected K[] fk;
+    protected long[] childrens;
+    protected long next;
 
-    boolean hasAvailableSpace();
+    public Page(int order) {
+        this.order = order;
+        this.currElements = 0;
+        this.childrens = new long[order];
+        for (int i = 0; i < order; i++) {
+            childrens[i] = -1;
+        }
+        this.next = -1;
+        this.sizeBytes = getByteSize();
+    }
 
-    boolean isUnderflow();
+    abstract public byte[] toByteArray() throws IOException;
+    
+    abstract public void fromByteArray(byte[] buffer) throws IOException;
 
-    boolean isLeaf();
+    abstract public void insertKeys(T firstKey, K secondKey, long pageRef, int index);
 
-    boolean isEmpty();
+    abstract public void removeElement(int index);
 
-    void removeElement(int index);
+    abstract public T[] getFirstKeys();
 
-    byte[] toByteArray() throws IOException;
+    abstract public void setFirstKey(int i, T firstKey);
 
-    boolean hasNext();
+    abstract public K[] getSecondKeys();
 
-    int getSizeBytes();
+    abstract public void setSecondKey(int i, K secondKey); 
 
-    int getOrder();
+    abstract protected int getByteSize();
 
-    short getCurrElements();
+    public boolean hasAvailableSpace() {
+        return currElements < (order - 1);
+    }
 
-    long[] getChildrens();
+    public boolean isLeaf() {
+        return childrens[0] == -1;
+    }
 
-    int[] getC1();
+    public boolean isEmpty() {
+        return currElements == 0;
+    }
 
-    int[] getC2();
+    public boolean hasNext(){
+        return next != -1;
+    }
 
-    long getNext();
+    public int getOrder() {
+        return order;
+    }
 
-    void setCurrElements(short currElements);
+    public short getCurrElements() {
+        return currElements;
+    }
 
-    void setChildrens(long[] childrens);
+    public long[] getChildrens() {
+        return childrens;
+    }
 
-    void setChildrens(int i, long newPointer);
+    public long getNext() {
+        return next;
+    }
 
-    void setC1(int[] c1);
+    public void setCurrElements(short currElements) {
+        this.currElements = currElements;
+    }
 
-    void setC1(int i, int newC1);
+    public void setChildrens(long[] childrens) {
+        this.childrens = childrens;
+    }
 
-    void setC2(int[] c2);
+    public void setChildrens(int i, long newPointer) {
+        if (i < order) 
+            this.childrens[i] = newPointer;
+    }
 
-    void setC2(int i, int newC2);
-
-    void setNext(long next);
+    public void setNext(long next) {
+        this.next = next;
+    }
 }

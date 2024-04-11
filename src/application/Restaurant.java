@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 import database.domain.Record;
 
-public class RestaurantRecord implements Record {
+public class Restaurant implements Record {
 
     private int id;
     private String name;
@@ -25,16 +25,16 @@ public class RestaurantRecord implements Record {
     private String[] websites;
     private final int LENGTH_STRING_FIXED = 5;
 
-    public RestaurantRecord() {
+    public Restaurant() {
         this("", new String[] {}, "", "", "", 0.0, 0.0, Instant.now(), new String[] {});
     }
 
-    public RestaurantRecord(String name, String[] categories, String postalCode, String city, String address,
+    public Restaurant(String name, String[] categories, String postalCode, String city, String address,
             double latitude, double longitude, Instant dateUpdated, String[] websites) {
         this(-1, name, categories, postalCode, city, address, latitude, longitude, dateUpdated, websites);
     }
 
-    public RestaurantRecord(int id, String name, String[] categories, String postalCode, String city, String address,
+    public Restaurant(int id, String name, String[] categories, String postalCode, String city, String address,
             double latitude, double longitude, Instant dateUpdated, String[] websites) {
         this.id = id;
         this.name = name;
@@ -50,7 +50,7 @@ public class RestaurantRecord implements Record {
 
     @Override
     public int compareTo(Object o) {
-        return this.getId() - ((RestaurantRecord) o).getId();
+        return this.getId() - ((Restaurant) o).getId();
     }
 
     @Override
