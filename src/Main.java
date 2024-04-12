@@ -18,7 +18,12 @@ public class Main {
                 Restaurant.class.getConstructor());
 
         BPlusTreePK_FK b = new BPlusTreePK_FK(4, "arv.db");
-        //b.save(7, 20);
-        b.find(7).stream().forEach(System.out::println);
+        b.save(7, 21);
+        b.save(9, 11);
+        b.save(88, 12);
+        
+        b.delete(88, 12);
+
+        b.find(88).stream().forEach(System.out::println);
     }
 }

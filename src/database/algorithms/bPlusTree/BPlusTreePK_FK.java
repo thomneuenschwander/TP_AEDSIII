@@ -10,14 +10,16 @@ public class BPlusTreePK_FK {
 
     private final int order;
     private final RandomAccessFile raf;
-    private int c1Aux;
-    private int c2Aux;
-    private long pageAux;
+    private int pkAux;
+    private int fkAux;
+    private long pageOffsetAux;
     private boolean hasGrown;
+    private boolean hasShrink;
 
     public BPlusTreePK_FK(int order, String fileName) throws IOException {
         this.order = order;
-        this.raf = new RandomAccessFile(fileName, "rw");
+        final String dir = "./src/database/data/bPlusTree/";
+        this.raf = new RandomAccessFile(dir + fileName, "rw");
         if (raf.length() < Long.BYTES) {
             writeRootOffset(-1);
         }
@@ -25,19 +27,19 @@ public class BPlusTreePK_FK {
 
     public boolean save(int c1, int c2) throws IOException {
         long rootOffset = readRootOffset();
-        c1Aux = c1;
-        c2Aux = c2;
-        pageAux = -1;
+        pkAux = c1;
+        fkAux = c2;
+        pageOffsetAux = -1;
         hasGrown = false;
 
         boolean saved = save(rootOffset);
         if (hasGrown) {
             PagePK_FK newPage = new PagePK_FK(order);
             newPage.setCurrElements((short) 1);
-            newPage.setFirstKey(0, c1Aux);
-            newPage.setSecondKey(0, c2Aux);
+            newPage.setFirstKey(0, pkAux);
+            newPage.setSecondKey(0, fkAux);
             newPage.setChildrens(0, rootOffset);
-            newPage.setChildrens(1, pageAux);
+            newPage.setChildrens(1, pageOffsetAux);
             long newRootOffset = raf.length();
             raf.seek(newRootOffset);
             raf.write(newPage.toByteArray());
@@ -50,20 +52,20 @@ public class BPlusTreePK_FK {
     private boolean save(long pageOffset) throws IOException {
         if (isPageNull(pageOffset)) {
             hasGrown = true;
-            pageAux = -1;
+            pageOffsetAux = -1;
             return false;
         }
         PagePK_FK currPage = readPageFromStream(pageOffset);
 
-        int index = lookForChildrenIndex(c1Aux, c2Aux, currPage);
+        int index = lookForChildrenIndex(pkAux, fkAux, currPage);
 
-        if (index < currPage.getCurrElements() && hasFoundKeysInPage(index, c1Aux, c2Aux, currPage)) {
+        if (index < currPage.getCurrElements() && hasFoundKeysInPage(index, pkAux, fkAux, currPage)) {
             hasGrown = false;
             return false;
         }
         boolean saved;
-        if (index == currPage.getCurrElements() || c1Aux < currPage.getFirstKeys()[index]
-                || (c1Aux == currPage.getFirstKeys()[index] && c2Aux < currPage.getSecondKeys()[index])) {
+        if (index == currPage.getCurrElements() || pkAux < currPage.getFirstKeys()[index]
+                || (pkAux == currPage.getFirstKeys()[index] && fkAux < currPage.getSecondKeys()[index])) {
             saved = save(currPage.getChildrens()[index]);
         } else {
             saved = save(currPage.getChildrens()[index + 1]);
@@ -81,7 +83,7 @@ public class BPlusTreePK_FK {
                 currPage.setSecondKey(j, copyC2);
                 currPage.setChildrens((j + 1), copyPointer);
             }
-            currPage.insertKeys(c1Aux, c2Aux, pageAux, index);
+            currPage.insertKeys(pkAux, fkAux, pageOffsetAux, index);
             raf.seek(pageOffset);
             raf.write(currPage.toByteArray());
             hasGrown = false;
@@ -99,16 +101,16 @@ public class BPlusTreePK_FK {
                 currPage.setSecondKey(j, copyC2);
                 currPage.setChildrens((j + 1), copyPointer);
             }
-            currPage.insertKeys(c1Aux, c2Aux, pageAux, index);
+            currPage.insertKeys(pkAux, fkAux, pageOffsetAux, index);
             if (currPage.isLeaf()) {
-                c1Aux = newPage.getFirstKeys()[0];
-                c2Aux = newPage.getSecondKeys()[0];
+                pkAux = newPage.getFirstKeys()[0];
+                fkAux = newPage.getSecondKeys()[0];
             } else {
                 int currElements = currPage.getCurrElements();
                 int biggestElementIndex = currElements - 1;
 
-                c1Aux = currPage.getFirstKeys()[biggestElementIndex];
-                c2Aux = currPage.getSecondKeys()[biggestElementIndex];
+                pkAux = currPage.getFirstKeys()[biggestElementIndex];
+                fkAux = currPage.getSecondKeys()[biggestElementIndex];
                 currPage.setFirstKey(biggestElementIndex, 0);
                 currPage.setSecondKey(biggestElementIndex, 0);
 
@@ -117,8 +119,8 @@ public class BPlusTreePK_FK {
             }
         } else {
             int j;
-            for (j = (order - 1) - mid; j > 0 && (c1Aux < newPage.getFirstKeys()[j - 1]
-                    || (c1Aux == newPage.getFirstKeys()[j - 1] && c2Aux < newPage.getSecondKeys()[j - 1])); j--) {
+            for (j = (order - 1) - mid; j > 0 && (pkAux < newPage.getFirstKeys()[j - 1]
+                    || (pkAux == newPage.getFirstKeys()[j - 1] && fkAux < newPage.getSecondKeys()[j - 1])); j--) {
                 int copyC1 = currPage.getFirstKeys()[j - 1];
                 int copyC2 = currPage.getSecondKeys()[j - 1];
                 long copyPointer = currPage.getChildrens()[j];
@@ -126,10 +128,10 @@ public class BPlusTreePK_FK {
                 currPage.setSecondKey(j, copyC2);
                 currPage.setChildrens((j + 1), copyPointer);
             }
-            newPage.insertKeys(c1Aux, c2Aux, pageAux, j);
+            newPage.insertKeys(pkAux, fkAux, pageOffsetAux, j);
 
-            c1Aux = newPage.getFirstKeys()[0];
-            c2Aux = newPage.getSecondKeys()[0];
+            pkAux = newPage.getFirstKeys()[0];
+            fkAux = newPage.getSecondKeys()[0];
 
             if (!currPage.isLeaf()) {
                 j = 0;
@@ -154,7 +156,7 @@ public class BPlusTreePK_FK {
             newPage.setNext(currPage.getNext());
             currPage.setNext(eof);
         }
-        pageAux = eof;
+        pageOffsetAux = eof;
         raf.seek(eof);
         raf.write(newPage.toByteArray());
 
@@ -167,7 +169,8 @@ public class BPlusTreePK_FK {
     private int lookForChildrenIndex(int c1, int c2, PagePK_FK pg) {
         int index = 0;
         for (; index < pg.getCurrElements()
-                && (c1 > pg.getFirstKeys()[index] || (c1 == pg.getFirstKeys()[index] && c2 > pg.getSecondKeys()[index])); index++)
+                && (c1 > pg.getFirstKeys()[index]
+                        || (c1 == pg.getFirstKeys()[index] && c2 > pg.getSecondKeys()[index])); index++)
             ;
         return index;
     }
@@ -267,6 +270,231 @@ public class BPlusTreePK_FK {
         } else {
             return find(c1, currPage.getChildrens()[index + 1]);
         }
+    }
+
+    public boolean delete(int pk, int fk) throws IOException {
+        long rootOffset = readRootOffset();
+        hasShrink = false;
+
+        boolean deleted = delete(pk, fk, rootOffset);
+
+        if (deleted && hasShrink) {
+
+            PagePK_FK root = readPageFromStream(rootOffset);
+
+            if (root.getCurrElements() == 0) {
+                writeRootOffset(root.getChildrens()[0]);
+            }
+        }
+        return deleted;
+    }
+
+    private boolean delete(int pk, int fk, long pageOffset) throws IOException {
+        boolean deleted = false;
+        int shrinkIndex;
+
+        if (isPageNull(pageOffset)) {
+            hasShrink = false;
+            return false;
+        }
+        PagePK_FK currPage = readPageFromStream(pageOffset);
+        int index = lookForChildrenIndex(pk, fk, currPage);
+
+        if (index < currPage.getCurrElements() && hasFoundKeysInPage(index, pkAux, fkAux, currPage)) {
+            int j = index;
+            for (; j < currPage.getCurrElements() - 1; j++) {
+                int copyPK = currPage.getFirstKeys()[j + 1];
+                int copyFK = currPage.getSecondKeys()[j + 1];
+
+                currPage.setFirstKey(j, copyPK);
+                currPage.setSecondKey(j, copyFK);
+            }
+            short currElements = (short) (currPage.getCurrElements() - 1);
+            currPage.setCurrElements(currElements);
+            currPage.setFirstKey(currElements, 0);
+            currPage.setSecondKey(currElements, 0);
+
+            raf.seek(pageOffset);
+            raf.write(currPage.toByteArray());
+
+            hasShrink = currElements < (order - 1) / 2;
+            return true;
+        }
+        
+        if (index == currPage.getCurrElements() || pkAux < currPage.getFirstKeys()[index]
+                || (pkAux == currPage.getFirstKeys()[index] && fkAux < currPage.getSecondKeys()[index])) {
+            deleted = delete(pk, fk, currPage.getChildrens()[index]);
+            shrinkIndex = index;
+        } else {
+            deleted = delete(pk, fk, currPage.getChildrens()[index + 1]);
+            shrinkIndex = index + 1;
+        }
+
+        if (hasShrink) {
+            long sonPageOffset = currPage.getChildrens()[shrinkIndex];
+            PagePK_FK sonPage = readPageFromStream(sonPageOffset);
+
+            long brotherPageOffset;
+            PagePK_FK brotherPage;
+
+            if (shrinkIndex > 0) {
+                brotherPageOffset = currPage.getChildrens()[shrinkIndex - 1];
+                brotherPage = readPageFromStream(brotherPageOffset);
+
+                if (brotherPage.getCurrElements() > (order - 1) / 2) {
+                    for (int j = sonPage.getCurrElements(); j > 0; j--) {
+                        int copyPK = sonPage.getFirstKeys()[j - 1];
+                        int copyFK = sonPage.getSecondKeys()[j - 1];
+                        long copyChildren = sonPage.getChildrens()[j];
+
+                        sonPage.setFirstKey(j, copyPK);
+                        sonPage.setSecondKey(j, copyFK);
+                        sonPage.setChildrens((j + 1), copyChildren);
+                    }
+                    long copyChildren = sonPage.getChildrens()[0];
+                    sonPage.setChildrens(1, copyChildren);
+                    sonPage.increaseCurrElements();
+
+                    if (sonPage.isLeaf()) {
+                        sonPage.setFirstKey(0, brotherPage.getFirstKeys()[brotherPage.getCurrElements() - 1]);
+                        sonPage.setSecondKey(0, brotherPage.getSecondKeys()[brotherPage.getCurrElements() - 1]);
+                    } else {
+                        sonPage.setFirstKey(0, brotherPage.getFirstKeys()[shrinkIndex - 1]);
+                        sonPage.setSecondKey(0, brotherPage.getSecondKeys()[shrinkIndex - 1]);
+                    }
+
+                    currPage.setFirstKey((shrinkIndex - 1),
+                            brotherPage.getFirstKeys()[brotherPage.getCurrElements() - 1]);
+                    currPage.setSecondKey((shrinkIndex - 1),
+                            brotherPage.getSecondKeys()[brotherPage.getCurrElements() - 1]);
+
+                    sonPage.setChildrens(0, brotherPage.getChildrens()[brotherPage.getCurrElements()]);
+                    brotherPage.decreaseCurrElements();
+                    hasShrink = false;
+                } else {
+                    if (!sonPage.isLeaf()) {
+                        short k = brotherPage.getCurrElements();
+                        brotherPage.setFirstKey(k, currPage.getFirstKeys()[shrinkIndex - 1]);
+                        brotherPage.setSecondKey(k, currPage.getSecondKeys()[shrinkIndex - 1]);
+                        brotherPage.setChildrens(k + 1, sonPage.getChildrens()[0]);
+                        brotherPage.increaseCurrElements();
+                    }
+                    for (int j = 0; j < sonPage.getCurrElements(); j++) {
+                        int copyPK = sonPage.getFirstKeys()[j];
+                        int copyFK = sonPage.getSecondKeys()[j];
+                        long copyChildren = sonPage.getChildrens()[j + 1];
+
+                        short k = brotherPage.getCurrElements();
+
+                        brotherPage.setFirstKey(k, copyPK);
+                        brotherPage.setSecondKey(k, copyFK);
+                        brotherPage.setChildrens(k + 1, copyChildren);
+
+                        brotherPage.increaseCurrElements();
+                    }
+                    sonPage.setCurrElements((short) 0);
+
+                    if (brotherPage.isLeaf())
+                        brotherPage.setNext(sonPage.getNext());
+
+                    int j = shrinkIndex - 1;
+                    for (; j < currPage.getCurrElements() - 1; j++) {
+                        int copyPK = currPage.getFirstKeys()[j + 1];
+                        int copyFK = currPage.getSecondKeys()[j + 1];
+                        long copyChildren = currPage.getChildrens()[j + 2];
+
+                        currPage.setFirstKey(j, copyPK);
+                        currPage.setSecondKey(j, copyFK);
+                        currPage.setChildrens(j + 1, copyChildren);
+                    }
+                    currPage.setFirstKey(j, 0);
+                    currPage.setSecondKey(j, 0);
+                    currPage.setChildrens(j + 1, -1);
+                    currPage.decreaseCurrElements();
+                    hasShrink = currPage.getCurrElements() < (order - 1) / 2;
+                }
+            } else {
+                brotherPageOffset = currPage.getChildrens()[shrinkIndex + 1];
+                brotherPage = readPageFromStream(brotherPageOffset);
+
+                if (brotherPage.getCurrElements() > (order - 1) / 2) {
+                    if (sonPage.isLeaf()) {
+                        short k = sonPage.getCurrElements();
+                        sonPage.setFirstKey(k, brotherPage.getFirstKeys()[0]);
+                        sonPage.setSecondKey(k, brotherPage.getSecondKeys()[0]);
+                        sonPage.setChildrens(k + 1, brotherPage.getChildrens()[0]);
+                        sonPage.increaseCurrElements();
+
+                        currPage.setFirstKey(shrinkIndex, brotherPage.getFirstKeys()[1]);
+                        currPage.setSecondKey(shrinkIndex, brotherPage.getSecondKeys()[1]);
+                    } else {
+                        short k = sonPage.getCurrElements();
+                        sonPage.setFirstKey(k, currPage.getFirstKeys()[shrinkIndex]);
+                        sonPage.setSecondKey(k, currPage.getSecondKeys()[shrinkIndex]);
+                        sonPage.setChildrens(k + 1, brotherPage.getChildrens()[0]);
+                        sonPage.increaseCurrElements();
+
+                        currPage.setFirstKey(shrinkIndex, brotherPage.getFirstKeys()[0]);
+                        currPage.setSecondKey(shrinkIndex, brotherPage.getSecondKeys()[0]);
+                    }
+                    int j = 0;
+                    for (; j < brotherPage.getCurrElements() - 1; j++) {
+                        int copyPK = brotherPage.getFirstKeys()[j + 1];
+                        int copyFK = brotherPage.getSecondKeys()[j + 1];
+                        long copyChildren = brotherPage.getChildrens()[j + 1];
+
+                        brotherPage.setFirstKey(j, copyPK);
+                        brotherPage.setSecondKey(j, copyFK);
+                        brotherPage.setChildrens(j, copyChildren);
+                    }
+                    brotherPage.setChildrens(j, brotherPage.getChildrens()[j + 1]);
+                    brotherPage.decreaseCurrElements();
+                    hasShrink = false;
+                } else {
+                    if (!sonPage.isLeaf()) {
+                        sonPage.setFirstKey(sonPage.getCurrElements(), currPage.getFirstKeys()[shrinkIndex]);
+                        sonPage.setSecondKey(sonPage.getCurrElements(), currPage.getSecondKeys()[shrinkIndex]);
+                        sonPage.setChildrens(sonPage.getCurrElements() + 1, brotherPage.getChildrens()[0]);
+                    }
+                    for (int j = 0; j < brotherPage.getCurrElements(); j++) {
+                        int copyPK = brotherPage.getFirstKeys()[j];
+                        int copyFK = brotherPage.getSecondKeys()[j];
+                        long copyChildren = brotherPage.getChildrens()[j + 1];
+
+                        short k = sonPage.getCurrElements();
+
+                        sonPage.setFirstKey(k, copyPK);
+                        sonPage.setSecondKey(k, copyFK);
+                        sonPage.setChildrens(k + 1, copyChildren);
+
+                        sonPage.increaseCurrElements();
+                    }
+                    brotherPage.setCurrElements((short) 0);
+                    sonPage.setNext(brotherPage.getNext());
+
+                    for (int j = shrinkIndex; j < currPage.getCurrElements() - 1; j++) {
+                        int copyPK = currPage.getFirstKeys()[j + 1];
+                        int copyFK = currPage.getSecondKeys()[j + 1];
+                        long copyChildren = currPage.getChildrens()[j + 2];
+
+                        currPage.setFirstKey(j, copyPK);
+                        currPage.setSecondKey(j, copyFK);
+                        currPage.setChildrens(j + 1, copyChildren);
+                    }
+                    currPage.decreaseCurrElements();
+                    hasShrink = currPage.getCurrElements() < (order - 1) / 2;
+                }
+            }
+            raf.seek(pageOffset);
+            raf.write(currPage.toByteArray());
+
+            raf.seek(sonPageOffset);
+            raf.write(sonPage.toByteArray());
+
+            raf.seek(brotherPageOffset);
+            raf.write(brotherPage.toByteArray());
+        }
+        return deleted;
     }
 
     private PagePK_FK readPageFromStream(long pageOffset) throws IOException {

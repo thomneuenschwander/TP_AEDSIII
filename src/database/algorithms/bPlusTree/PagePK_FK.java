@@ -108,5 +108,13 @@ public class PagePK_FK extends Page<Integer, Integer>{
     public void setSecondKey(int i, Integer secondKey) {
         if (i < (order - 1)) 
             this.fk[i] = secondKey;
-    } 
+    }
+
+    public void increaseCurrElements(){
+        ++this.currElements;
+    }
+
+    public void decreaseCurrElements(){
+        --this.currElements;
+    }
 }
