@@ -7,6 +7,7 @@ import java.lang.reflect.Constructor;
 import java.util.Optional;
 
 import database.domain.Record;
+import database.domain.algorithms.Index;
 
 public class SequentialAcess<T extends Record> {
     private final RandomAccessFile raf;
@@ -48,6 +49,14 @@ public class SequentialAcess<T extends Record> {
         return null;
     }
 
+    public Optional<T> find(long recordOffset) throws Exception {
+        boolean grave = raf.readBoolean();
+        short size = raf.readShort();
+        if(!grave)
+            return Optional.of(deserialize(size));
+        return null;
+    }
+
     private T deserialize(short byteLength) throws Exception {
         T entity = constructor.newInstance();
         byte[] record = new byte[byteLength];
@@ -56,11 +65,11 @@ public class SequentialAcess<T extends Record> {
         return entity;
     }
 
-    public long save(T record) throws IOException {
+    public Index save(T record) throws IOException {
         setEntityId(record);
         byte[] serialized = record.toByteArray();
         long recordOffset = saveEOF(serialized);
-        return recordOffset;
+        return new Index(record.getId(), recordOffset);
     }
 
     private long saveEOF(byte[] serialized) throws IOException {
