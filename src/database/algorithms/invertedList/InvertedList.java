@@ -9,7 +9,15 @@ import java.util.List;
 public class InvertedList {
     private RandomAccessFile indexRAF;
     private RandomAccessFile dataRAF;
-    public static final String dir = "src/database/manager/indexer/invertedList/files/";
+    public static final String dir = "./src/database/data/invertedList/";
+
+    public InvertedList(String indexFileName, String dataRAFName, Collection<String> terms) throws IOException {
+        this.indexRAF = new RandomAccessFile(dir + indexFileName, "rw");
+        this.dataRAF = new RandomAccessFile(dir + dataRAFName, "rw");
+        if(indexRAF.length() == 0){
+            initializeIndexes(terms);
+        }
+    }
 
     public InvertedList(String indexFileName, String dataRAFName) throws IOException {
         this.indexRAF = new RandomAccessFile(dir + indexFileName, "rw");

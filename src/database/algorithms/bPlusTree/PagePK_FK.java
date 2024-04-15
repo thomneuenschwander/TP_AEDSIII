@@ -6,7 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import database.domain.algorithms.Page;
+import database.domain.structs.Page;
 
 public class PagePK_FK extends Page<Integer, Integer>{
 

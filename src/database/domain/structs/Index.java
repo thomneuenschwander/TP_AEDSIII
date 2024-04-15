@@ -1,4 +1,4 @@
-package database.domain.algorithms;
+package database.domain.structs;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -1,26 +1,16 @@
-import java.time.Instant;
-
-import application.Restaurant;
+import application.ReaderCSV;
 import database.RepositoryImpl;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        Restaurant res = new Restaurant("Restaurante A", new String[] { "Categoria A", "Categoria B" },
-                "12345", "Cidade A", "Endereço A", 40.1234, -74.5678,
-                Instant.now(), new String[] { "http://site-a.com", "http://site-b.com" });
+        var readerCSV = new ReaderCSV("./dataset/Fast_Food_Restaurants.csv");
+        var repository = new RepositoryImpl();
+        repository.saveAll(readerCSV.readFile());
 
-        Restaurant res2 = new Restaurant("adassdadsA", new String[] { "Categoria A", "Categoria B" },
-                "12345", "Cidade A", "Endereço A", 40.1234, -74.5678,
-                Instant.now(), new String[] { "http://site-a.com", "http://site-b.com" });
-
-
-        RepositoryImpl rep = new RepositoryImpl();
-
-        rep.save(res);
-       
-
-        System.out.println(rep.findById(0));
+        repository.findByName("taco bell").forEach(System.out::println);
         
-
+        System.out.println();
+        System.out.println("pesquisando com a hash");
+        System.out.println(repository.findById(9));
     }
 }

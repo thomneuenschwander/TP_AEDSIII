@@ -25,10 +25,10 @@ public class BPlusTreePK_FK {
         }
     }
 
-    public boolean save(int c1, int c2) throws IOException {
+    public boolean save(int PK, int FK) throws IOException {
         long rootOffset = readRootOffset();
-        pkAux = c1;
-        fkAux = c2;
+        pkAux = PK;
+        fkAux = FK;
         pageOffsetAux = -1;
         hasGrown = false;
 
@@ -76,11 +76,11 @@ public class BPlusTreePK_FK {
 
         if (currPage.hasAvailableSpace()) {
             for (int j = currPage.getCurrElements(); j > index; j--) {
-                int copyC1 = currPage.getFirstKeys()[j - 1];
-                int copyC2 = currPage.getSecondKeys()[j - 1];
+                int copyPK = currPage.getFirstKeys()[j - 1];
+                int copyFK = currPage.getSecondKeys()[j - 1];
                 long copyPointer = currPage.getChildrens()[j];
-                currPage.setFirstKey(j, copyC1);
-                currPage.setSecondKey(j, copyC2);
+                currPage.setFirstKey(j, copyPK);
+                currPage.setSecondKey(j, copyFK);
                 currPage.setChildrens((j + 1), copyPointer);
             }
             currPage.insertKeys(pkAux, fkAux, pageOffsetAux, index);
@@ -94,11 +94,11 @@ public class BPlusTreePK_FK {
         int mid = (order - 1) / 2;
         if (index <= mid) {
             for (int j = mid; j > 0 && j > index; j--) {
-                int copyC1 = currPage.getFirstKeys()[j - 1];
-                int copyC2 = currPage.getSecondKeys()[j - 1];
+                int copyPK = currPage.getFirstKeys()[j - 1];
+                int copyFK = currPage.getSecondKeys()[j - 1];
                 long copyPointer = currPage.getChildrens()[j];
-                currPage.setFirstKey(j, copyC1);
-                currPage.setSecondKey(j, copyC2);
+                currPage.setFirstKey(j, copyPK);
+                currPage.setSecondKey(j, copyFK);
                 currPage.setChildrens((j + 1), copyPointer);
             }
             currPage.insertKeys(pkAux, fkAux, pageOffsetAux, index);
@@ -121,11 +121,11 @@ public class BPlusTreePK_FK {
             int j;
             for (j = (order - 1) - mid; j > 0 && (pkAux < newPage.getFirstKeys()[j - 1]
                     || (pkAux == newPage.getFirstKeys()[j - 1] && fkAux < newPage.getSecondKeys()[j - 1])); j--) {
-                int copyC1 = currPage.getFirstKeys()[j - 1];
-                int copyC2 = currPage.getSecondKeys()[j - 1];
+                int copyPK = currPage.getFirstKeys()[j - 1];
+                int copyFK = currPage.getSecondKeys()[j - 1];
                 long copyPointer = currPage.getChildrens()[j];
-                currPage.setFirstKey(j, copyC1);
-                currPage.setSecondKey(j, copyC2);
+                currPage.setFirstKey(j, copyPK);
+                currPage.setSecondKey(j, copyFK);
                 currPage.setChildrens((j + 1), copyPointer);
             }
             newPage.insertKeys(pkAux, fkAux, pageOffsetAux, j);
@@ -136,12 +136,12 @@ public class BPlusTreePK_FK {
             if (!currPage.isLeaf()) {
                 j = 0;
                 for (; j < newPage.getCurrElements() - 1; j++) {
-                    int copyC1 = newPage.getFirstKeys()[j + 1];
-                    int copyC2 = newPage.getSecondKeys()[j + 1];
+                    int copyPK = newPage.getFirstKeys()[j + 1];
+                    int copyFK = newPage.getSecondKeys()[j + 1];
                     long copyPointer = newPage.getChildrens()[j + 1];
 
-                    newPage.setFirstKey(j, copyC1);
-                    newPage.setSecondKey(j, copyC2);
+                    newPage.setFirstKey(j, copyPK);
+                    newPage.setSecondKey(j, copyFK);
                     newPage.setChildrens(j, copyPointer);
                 }
                 long copyPointer = newPage.getChildrens()[j + 1];
@@ -166,25 +166,25 @@ public class BPlusTreePK_FK {
         return true;
     }
 
-    private int lookForChildrenIndex(int c1, int c2, PagePK_FK pg) {
+    private int lookForChildrenIndex(int PK, int FK, PagePK_FK pg) {
         int index = 0;
         for (; index < pg.getCurrElements()
-                && (c1 > pg.getFirstKeys()[index]
-                        || (c1 == pg.getFirstKeys()[index] && c2 > pg.getSecondKeys()[index])); index++)
+                && (PK > pg.getFirstKeys()[index]
+                        || (PK == pg.getFirstKeys()[index] && FK > pg.getSecondKeys()[index])); index++)
             ;
         return index;
     }
 
-    private int lookForChildrenIndex(int c1, PagePK_FK pg) {
+    private int lookForChildrenIndex(int PK, PagePK_FK pg) {
         int index = 0;
         for (; index < pg.getCurrElements()
-                && c1 > pg.getFirstKeys()[index]; index++)
+                && PK > pg.getFirstKeys()[index]; index++)
             ;
         return index;
     }
 
-    private boolean hasFoundKeysInPage(int index, int c1, int c2, PagePK_FK pg) {
-        return (c1 == pg.getFirstKeys()[index] && c2 == pg.getSecondKeys()[index] && pg.isLeaf());
+    private boolean hasFoundKeysInPage(int index, int PK, int FK, PagePK_FK pg) {
+        return (PK == pg.getFirstKeys()[index] && FK == pg.getSecondKeys()[index] && pg.isLeaf());
     }
 
     private void splitAndCopyPage(PagePK_FK newPage, PagePK_FK oldPage) {
@@ -204,26 +204,26 @@ public class BPlusTreePK_FK {
         }
     }
 
-    public Optional<List<Integer>> find(int c1) throws IOException {
+    public Optional<List<Integer>> find(int PK) throws IOException {
         long rootOffset = readRootOffset();
         if (isPageNull(rootOffset)) {
             return null;
         }
-        return find(c1, rootOffset);
+        return find(PK, rootOffset);
     }
 
-    private Optional<List<Integer>> find(int c1, long pageOffset) throws IOException {
+    private Optional<List<Integer>> find(int PK, long pageOffset) throws IOException {
         if (isPageNull(pageOffset)) {
             return null;
         }
         PagePK_FK currPage = readPageFromStream(pageOffset);
-        int index = lookForChildrenIndex(c1, currPage);
+        int index = lookForChildrenIndex(PK, currPage);
 
-        if (index < currPage.getCurrElements() && currPage.isLeaf() && c1 == currPage.getFirstKeys()[index]) {
+        if (index < currPage.getCurrElements() && currPage.isLeaf() && PK == currPage.getFirstKeys()[index]) {
             List<Integer> found = new ArrayList<>();
             // TODO refatorar essa seguinte parte
-            while (c1 <= currPage.getFirstKeys()[index]) {
-                if (c1 == currPage.getFirstKeys()[index]) {
+            while (PK <= currPage.getFirstKeys()[index]) {
+                if (PK == currPage.getFirstKeys()[index]) {
                     found.add(currPage.getSecondKeys()[index]);
                 }
                 index++;
@@ -243,11 +243,11 @@ public class BPlusTreePK_FK {
             }
             currPage = readPageFromStream(currPage.getNext());
             index = 0;
-            if (c1 <= currPage.getFirstKeys()[index]) {
+            if (PK <= currPage.getFirstKeys()[index]) {
                 List<Integer> found = new ArrayList<>();
                 // TODO refatorar essa seguinte parte
-                while (c1 <= currPage.getFirstKeys()[index]) {
-                    if (c1 == currPage.getFirstKeys()[index]) {
+                while (PK <= currPage.getFirstKeys()[index]) {
+                    if (PK == currPage.getFirstKeys()[index]) {
                         found.add(currPage.getSecondKeys()[index]);
                     }
                     index++;
@@ -265,10 +265,10 @@ public class BPlusTreePK_FK {
                 return null;
             }
         }
-        if (index == currPage.getCurrElements() || c1 <= currPage.getFirstKeys()[index]) {
-            return find(c1, currPage.getChildrens()[index]);
+        if (index == currPage.getCurrElements() || PK <= currPage.getFirstKeys()[index]) {
+            return find(PK, currPage.getChildrens()[index]);
         } else {
-            return find(c1, currPage.getChildrens()[index + 1]);
+            return find(PK, currPage.getChildrens()[index + 1]);
         }
     }
 

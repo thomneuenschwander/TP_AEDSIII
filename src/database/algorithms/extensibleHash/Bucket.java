@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import database.domain.Serializable;
-import database.domain.algorithms.Index;
+import database.domain.structs.Index;
 
 public class Bucket<T extends Index> implements Serializable {
     protected byte localDeep;
@@ -36,19 +36,20 @@ public class Bucket<T extends Index> implements Serializable {
     public T find(int key) {
         if (isEmpty())
             return null;
-        for (T index : indexes) {
-            if (index.getId() == key) {
-                return index;
-            }
-        }
-        return null;
+        int i = 0;
+        while (i < quantity && key > indexes.get(i).getId())
+            i++;
+        if (i < quantity && key == indexes.get(i).getId())
+            return indexes.get(i);
+        else
+            return null;
     }
 
     public boolean save(T index) {
         if (isFull())
             return false;
 
-        int i = quantity - 1; 
+        int i = quantity - 1;
         while (i >= 0 && index.getId() < indexes.get(i).getId())
             i--;
         indexes.add(i + 1, index);

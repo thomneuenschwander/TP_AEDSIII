@@ -1,4 +1,4 @@
-package application;
+package application.model;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -208,6 +208,19 @@ public class Restaurant implements Record {
                 + ", postalCode=" + postalCode + ", city=" + city + ", address=" + address + ", latitude=" + latitude
                 + ", longitude=" + longitude + ", dateUpdated=" + dateUpdated + ", websites="
                 + Arrays.toString(websites) + ", LENGTH_STRING_FIXED=" + LENGTH_STRING_FIXED + "]";
+    }
+
+    @Override
+    public int getByteLength() {
+        int byteLength = 0;
+        byte[] byteArray;
+        try {
+            byteArray = this.toByteArray();
+            byteLength = byteArray.length;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return byteLength;
     }
 
 }

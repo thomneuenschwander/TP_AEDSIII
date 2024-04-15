@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
 
-import database.domain.algorithms.Index;
+import database.domain.structs.Index;
 
 public class ExtensibleHash<T extends Index> {
     public static final String dataPath = "./src/database/data/hash/";

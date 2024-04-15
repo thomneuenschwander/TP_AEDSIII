@@ -4,10 +4,12 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import database.domain.Record;
-import database.domain.algorithms.Index;
+import database.domain.structs.Index;
 
 public class SequentialAcess<T extends Record> {
     private final RandomAccessFile raf;
@@ -20,7 +22,7 @@ public class SequentialAcess<T extends Record> {
         this.constructor = constructor;
         this.headerEnd = Integer.BYTES;
         if (raf.length() < headerEnd)
-            writeIdHeader(-1);
+            writeIdHeader(0);
     }
 
     public Optional<T> find(int id) throws Exception {
@@ -50,6 +52,7 @@ public class SequentialAcess<T extends Record> {
     }
 
     public Optional<T> find(long recordOffset) throws Exception {
+        raf.seek(recordOffset);
         boolean grave = raf.readBoolean();
         short size = raf.readShort();
         if(!grave)
@@ -146,6 +149,25 @@ public class SequentialAcess<T extends Record> {
                 break;
             }
         }
+    }
+
+    public List<T> findAll() throws Exception{
+        List<T> found = new ArrayList<>();
+        raf.seek(headerEnd);
+        while (true) {
+            try {
+                boolean grave = raf.readBoolean();
+                short currRecordSize = raf.readShort();
+
+                if (!grave) {
+                    T record = deserialize(currRecordSize);
+                    found.add(record);
+                }   
+            } catch (EOFException e) {
+                break;
+            }
+        }
+        return found;
     }
 
     private int readIdHeader() throws IOException {
