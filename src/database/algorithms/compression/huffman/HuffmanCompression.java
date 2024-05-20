@@ -10,36 +10,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+import database.algorithms.compression.Compression;
+
 public class HuffmanCompression {
 
-    public static void compress(String inputFilePath, String outputFilePath) {
+    public static void compress(FileInputStream src, ObjectOutputStream dst) {
         try {
-            var fis = new FileInputStream(inputFilePath);
-            byte[] fileBytes = new byte[fis.available()];
-            fis.read(fileBytes);
-            fis.close();
+            byte[] fileBytes = new byte[src.available()];
+            src.read(fileBytes);
+            src.close();
 
-            Map<Byte, Integer> frequencies = calculateFrequencies(fileBytes);
+            Map<Byte, Integer> frequencies = Compression.calculateFrequencies(fileBytes);
             HuffmanNode root = createHuffmanTree(frequencies);
 
             Map<Byte, String> codeMap = new HashMap<>();
             generateCodes(root, new StringBuilder(), codeMap);
             byte[] huffmanEncoded = encode(fileBytes, codeMap);
 
-            var oos = new ObjectOutputStream(new FileOutputStream(outputFilePath));
-            oos.writeObject(huffmanEncoded);
-            oos.writeObject(codeMap);
-            oos.close();
+            dst.writeObject(huffmanEncoded);
+            dst.writeObject(codeMap);
+            dst.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private static Map<Byte, Integer> calculateFrequencies(byte[] bytes) {
-        Map<Byte, Integer> frequencies = new HashMap<>();
-        for (byte b : bytes)
-            frequencies.put(b, frequencies.getOrDefault(b, 0) + 1);
-        return frequencies;
     }
 
     private static HuffmanNode createHuffmanTree(Map<Byte, Integer> frequencies) {
