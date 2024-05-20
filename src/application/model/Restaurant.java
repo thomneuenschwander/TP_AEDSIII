@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 
-import database.domain.Record;
+import database.domain.persistence.Record;
 
 public class Restaurant implements Record {
 

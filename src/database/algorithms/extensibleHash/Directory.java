@@ -6,7 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import database.domain.Serializable;
+import database.domain.persistence.Serializable;
 
 public class Directory implements Serializable {
     protected byte globalDeep;

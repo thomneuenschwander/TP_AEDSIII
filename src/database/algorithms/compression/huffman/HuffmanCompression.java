@@ -2,16 +2,17 @@ package database.algorithms.compression.huffman;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
 public class HuffmanCompression {
 
-    private Map<Byte, String> codeMap = new HashMap<>();
-
-    public void compress(String inputFilePath, String outputFilePath) {
+    public static void compress(String inputFilePath, String outputFilePath) {
         try {
             var fis = new FileInputStream(inputFilePath);
             byte[] fileBytes = new byte[fis.available()];
@@ -21,26 +22,27 @@ public class HuffmanCompression {
             Map<Byte, Integer> frequencies = calculateFrequencies(fileBytes);
             HuffmanNode root = createHuffmanTree(frequencies);
 
-            generateCodes(root, new StringBuilder());
-            byte[] huffmanEncoded = encode(fileBytes);
+            Map<Byte, String> codeMap = new HashMap<>();
+            generateCodes(root, new StringBuilder(), codeMap);
+            byte[] huffmanEncoded = encode(fileBytes, codeMap);
 
             var oos = new ObjectOutputStream(new FileOutputStream(outputFilePath));
             oos.writeObject(huffmanEncoded);
-            oos.writeObject(huffmanEncoded);
+            oos.writeObject(codeMap);
             oos.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private Map<Byte, Integer> calculateFrequencies(byte[] bytes) {
+    private static Map<Byte, Integer> calculateFrequencies(byte[] bytes) {
         Map<Byte, Integer> frequencies = new HashMap<>();
         for (byte b : bytes)
             frequencies.put(b, frequencies.getOrDefault(b, 0) + 1);
         return frequencies;
     }
 
-    private HuffmanNode createHuffmanTree(Map<Byte, Integer> frequencies) {
+    private static HuffmanNode createHuffmanTree(Map<Byte, Integer> frequencies) {
         PriorityQueue<HuffmanNode> pq = getHuffmanRoots(frequencies);
         while (pq.size() > 1) {
             var left = pq.poll();
@@ -53,40 +55,40 @@ public class HuffmanCompression {
         return pq.poll();
     }
 
-    private PriorityQueue<HuffmanNode> getHuffmanRoots(Map<Byte, Integer> frequencies) {
+    private static PriorityQueue<HuffmanNode> getHuffmanRoots(Map<Byte, Integer> frequencies) {
         PriorityQueue<HuffmanNode> roots = new PriorityQueue<>();
         for (Map.Entry<Byte, Integer> entry : frequencies.entrySet())
             roots.add(new HuffmanNode(entry.getKey(), entry.getValue()));
         return roots;
     }
 
-    private void generateCodes(HuffmanNode root, StringBuilder code) {
+    private static void generateCodes(HuffmanNode root, StringBuilder code, Map<Byte, String> codeMap) {
         if (root.left == null && root.right == null) {
-            this.codeMap.put(root.data, code.toString());
+            codeMap.put(root.data, code.toString());
             return;
         }
 
         if (root.left != null) {
             code.append('0');
-            generateCodes(root.left, code);
+            generateCodes(root.left, code, codeMap);
             code.deleteCharAt(code.length() - 1);
         }
 
         if (root.right != null) {
             code.append('1');
-            generateCodes(root.right, code);
+            generateCodes(root.right, code, codeMap);
             code.deleteCharAt(code.length() - 1);
         }
     }
 
-    private byte[] encode(byte[] fileBytes) {
+    private static byte[] encode(byte[] fileBytes, Map<Byte, String> codeMap) {
         StringBuilder bits = new StringBuilder();
         for (byte b : fileBytes)
-            bits.append(this.codeMap.get(b));
+            bits.append(codeMap.get(b));
         return bitPacking(bits);
     }
 
-    private byte[] bitPacking(StringBuilder bits) {
+    private static byte[] bitPacking(StringBuilder bits) {
         int length = (int) Math.ceil(bits.length() / (double) Byte.SIZE);
         var bytes = new byte[length];
 
@@ -95,5 +97,57 @@ public class HuffmanCompression {
             bytes[j] = (byte) Integer.parseInt(bitSegment, 2);
         }
         return bytes;
+    }
+
+    public static void decompress(String inputFilePath, String outputFilePath) {
+        try {
+            var fis = new FileInputStream(inputFilePath);
+            var ois = new ObjectInputStream(fis);
+            byte[] compressed = (byte[]) ois.readObject();
+
+            @SuppressWarnings("unchecked")
+            Map<Byte, String> huffmanCodeMap = (Map<Byte, String>) ois.readObject();
+            fis.close();
+
+            StringBuilder bits = bitUnpacking(compressed);
+            Map<String, Byte> reverseMap = reverseHuffmanCodeMap(huffmanCodeMap);
+            List<Byte> decodedBytes = decodeBitsToBytes(bits, reverseMap);
+
+            var fos = new FileOutputStream(outputFilePath);
+
+            for (Byte b : decodedBytes)
+                fos.write(b);
+
+            fos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static StringBuilder bitUnpacking(byte[] bytes) {
+        StringBuilder bits = new StringBuilder();
+        for (byte b : bytes)
+            bits.append(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
+        return bits;
+    }
+
+    private static Map<String, Byte> reverseHuffmanCodeMap(Map<Byte, String> huffmanCodeMap) {
+        Map<String, Byte> reverseMap = new HashMap<>();
+        for (Map.Entry<Byte, String> entry : huffmanCodeMap.entrySet())
+            reverseMap.put(entry.getValue(), entry.getKey());
+        return reverseMap;
+    }
+
+    private static List<Byte> decodeBitsToBytes(StringBuilder bits, Map<String, Byte> reverseMap) {
+        List<Byte> decodedBytes = new ArrayList<>();
+        StringBuilder currentBits = new StringBuilder();
+        for (int i = 0; i < bits.length(); i++) {
+            currentBits.append(bits.charAt(i));
+            if (reverseMap.containsKey(currentBits.toString())) {
+                decodedBytes.add(reverseMap.get(currentBits.toString()));
+                currentBits.setLength(0);
+            }
+        }
+        return decodedBytes;
     }
 }
