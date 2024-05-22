@@ -6,17 +6,17 @@ import java.util.BitSet;
  * A class to represent a sequence of integers using a fixed number of bits for
  * each integer.
  */
-public class BitIntegerSequence {
+public class IntegerBitSequence {
     private final int bitsPerNumber;
     private BitSet bitSet;
     private int currentBitIndex;
 
     /**
-     * Constructs a BitIntegerSequence with a specified number of bits per integer.
+     * Constructs a IntegerBitSequence with a specified number of bits per integer.
      *
      * @param bitsPerNumber the number of bits used to represent each integer
      */
-    public BitIntegerSequence(int bitsPerNumber) {
+    public IntegerBitSequence(int bitsPerNumber) {
         this.bitsPerNumber = bitsPerNumber;
         this.currentBitIndex = 0;
         this.bitSet = new BitSet();
@@ -28,9 +28,8 @@ public class BitIntegerSequence {
      * @param n the integer to be added
      */
     public void add(int n) {
-        for (int i = bitsPerNumber; i > 0; i--, currentBitIndex++, n >>= 1) {
+        for (int i = bitsPerNumber; i > 0; i--, currentBitIndex++, n >>= 1) 
             setBit(currentBitIndex, n % 2 == 0);
-        }
     }
 
     /**
@@ -40,11 +39,10 @@ public class BitIntegerSequence {
      * @param value    true to set the bit, false to clear the bit
      */
     private void setBit(int position, boolean value) {
-        if (value) {
+        if (value) 
             this.bitSet.set(position);
-        } else {
+        else 
             this.bitSet.clear(position);
-        }
     }
 
     /**
@@ -57,9 +55,8 @@ public class BitIntegerSequence {
         int pos = index * bitsPerNumber;
         int numberStoraged = 0;
         for (int j = 0; j < bitsPerNumber; j++) {
-            if (bitSet.get(pos + j)) {
+            if (bitSet.get(pos + j)) 
                 numberStoraged += (1 << j);
-            }
         }
         return numberStoraged;
     }

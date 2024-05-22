@@ -1,17 +1,18 @@
 package database.algorithms.compression.lzw;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+
+import database.algorithms.compression.Compression;
+import database.algorithms.compression.IntegerBitSequence;
 
 public class LZWCompression {
-    private static final int DICTIONARY_MAX_SIZE = 4096;
     private static final int BASICS_SYMBOLS_SIZE = 256;
-   // private static final int BITS_PER_INDEX = 12;
-    private static final int BYTE_MASK = 0xFF;
+    private static final int DICTIONARY_MAX_SIZE = 4096;
+    private static final int BITS_PER_INDEX = (int) Math.ceil(Compression.log2(DICTIONARY_MAX_SIZE));
 
     public static void compress(FileInputStream src, ObjectOutputStream dst) {
         try {
@@ -19,44 +20,55 @@ public class LZWCompression {
             src.read(fileBytes);
             src.close();
 
-            Map<String, Integer> dictionary = initializeDictionary();
-            List<Integer> LZWCodes = generateLZWCodes(fileBytes, dictionary);
-            
+            List<List<Byte>> dictionary = initializeDictionary();
+            List<Integer> LZWCodes = generateLZWCodes(dictionary, fileBytes);
+            byte[] compressed = serializeLZWCodes(LZWCodes);
+
+            dst.writeObject(compressed);
             dst.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static Map<String, Integer> initializeDictionary() {
-        Map<String, Integer> dictionary = new LinkedHashMap<>(BASICS_SYMBOLS_SIZE);
-        for (int i = 0; i < BASICS_SYMBOLS_SIZE; i++)
-            dictionary.put("" + (char) i, i);
+    private static List<List<Byte>> initializeDictionary() {
+        List<List<Byte>> dictionary = new ArrayList<>(DICTIONARY_MAX_SIZE);
+        for (int i = 0; i < BASICS_SYMBOLS_SIZE; i++) {
+            List<Byte> basicSymbol = new ArrayList<>(Byte.BYTES);
+            basicSymbol.add((byte) i);
+            dictionary.add(basicSymbol);
+        }
         return dictionary;
     }
 
-    private static List<Integer> generateLZWCodes(byte[] bytes, Map<String, Integer> dictionary) {
-        int dictSize = BASICS_SYMBOLS_SIZE;
-        String prefix = "";
+    private static List<Integer> generateLZWCodes(List<List<Byte>> dictionary, byte[] bytes) {
         List<Integer> output = new ArrayList<>();
+        for (int i = 0; i < bytes.length; i++) {
+            List<Byte> in = new ArrayList<>();
+            in.add(bytes[i++]);
 
-        for (byte b : bytes) {
-            char symbol = (char) (b & BYTE_MASK);
-            String prefixPlusSymbol = prefix + symbol;
+            int dictIndex = dictionary.indexOf(in);
+            int code = dictIndex;
 
-            if (dictionary.containsKey(prefixPlusSymbol))
-                prefix = prefixPlusSymbol;
-            else {
-                output.add(dictionary.get(prefix));
-                if (dictSize < DICTIONARY_MAX_SIZE) 
-                    dictionary.put(prefixPlusSymbol, dictSize++);
-                prefix = "" + symbol;
+            while (dictIndex != -1 && i < bytes.length) {
+                in.add(bytes[i++]);
+                code = dictIndex;
+                dictIndex = dictionary.indexOf(in);
             }
+
+            output.add(code);
+
+            if (dictionary.size() < DICTIONARY_MAX_SIZE)
+                dictionary.add(in);
         }
-
-        if (!prefix.isEmpty()) 
-            output.add(dictionary.get(prefix));
-
         return output;
+    }
+
+    private static byte[] serializeLZWCodes(List<Integer> LZWCodes) {
+        IntegerBitSequence bis = new IntegerBitSequence(BITS_PER_INDEX);
+        LZWCodes.forEach(code -> {
+            bis.add(code);
+        });
+        return bis.getBytes();
     }
 }

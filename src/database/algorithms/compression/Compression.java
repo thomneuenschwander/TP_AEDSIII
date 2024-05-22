@@ -120,7 +120,7 @@ public class Compression {
 
         for (Map.Entry<Byte, Integer> entry : frequencies.entrySet()) {
             double frequency = (double) entry.getValue() / dataLength;
-            entropy += frequency * (Math.log(frequency) / Math.log(2));
+            entropy += frequency * log2(frequency);
         }
 
         return -entropy;
@@ -132,4 +132,8 @@ public class Compression {
             frequencies.put(b, frequencies.getOrDefault(b, 0) + 1);
         return frequencies;
     }
+
+    public static double log2(double number) {
+        return Math.log(number) / Math.log(2);
+    } 
 }
