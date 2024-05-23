@@ -135,5 +135,5 @@ public class Compression {
 
     public static double log2(double number) {
         return Math.log(number) / Math.log(2);
-    } 
+    }
 }

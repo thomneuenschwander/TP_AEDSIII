@@ -12,7 +12,7 @@ public class IntegerBitSequence {
     private int currentBitIndex;
 
     /**
-     * Constructs a IntegerBitSequence with a specified number of bits per integer.
+     * Constructs an IntegerBitSequence with a specified number of bits per integer.
      *
      * @param bitsPerNumber the number of bits used to represent each integer
      */
@@ -28,8 +28,10 @@ public class IntegerBitSequence {
      * @param n the integer to be added
      */
     public void add(int n) {
-        for (int i = bitsPerNumber; i > 0; i--, currentBitIndex++, n >>= 1) 
-            setBit(currentBitIndex, n % 2 == 0);
+        for (int i = 0; i < bitsPerNumber; i++, currentBitIndex++) {
+            setBit(currentBitIndex, (n & 1) == 1);
+            n >>= 1;
+        }
     }
 
     /**
@@ -39,10 +41,11 @@ public class IntegerBitSequence {
      * @param value    true to set the bit, false to clear the bit
      */
     private void setBit(int position, boolean value) {
-        if (value) 
+        if (value) {
             this.bitSet.set(position);
-        else 
+        } else {
             this.bitSet.clear(position);
+        }
     }
 
     /**
@@ -55,8 +58,9 @@ public class IntegerBitSequence {
         int pos = index * bitsPerNumber;
         int numberStoraged = 0;
         for (int j = 0; j < bitsPerNumber; j++) {
-            if (bitSet.get(pos + j)) 
-                numberStoraged += (1 << j);
+            if (bitSet.get(pos + j)) {
+                numberStoraged |= (1 << j);
+            }
         }
         return numberStoraged;
     }
@@ -73,8 +77,8 @@ public class IntegerBitSequence {
     /**
      * Sets the bit sequence from a byte array.
      *
-     * @param numOfByteIntegers     the number of integers in the byte array
-     * @param bytes the byte array representing the bit sequence
+     * @param numOfByteIntegers the number of integers in the byte array
+     * @param bytes             the byte array representing the bit sequence
      */
     public void setBytes(int numOfByteIntegers, byte[] bytes) {
         currentBitIndex = numOfByteIntegers * bitsPerNumber;

@@ -1,74 +1,146 @@
 package database.algorithms.compression.lzw;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
-
-import database.algorithms.compression.Compression;
-import database.algorithms.compression.IntegerBitSequence;
+import java.util.Map;
 
 public class LZWCompression {
-    private static final int BASICS_SYMBOLS_SIZE = 256;
     private static final int DICTIONARY_MAX_SIZE = 4096;
-    private static final int BITS_PER_INDEX = (int) Math.ceil(Compression.log2(DICTIONARY_MAX_SIZE));
 
-    public static void compress(FileInputStream src, ObjectOutputStream dst) {
+    private static List<Integer> generateLZWCodes(Map<List<Byte>, Integer> dictionary, byte[] bytes) {
+        List<Integer> output = new LinkedList<>();
+        int dictSize = 256; 
+        List<Byte> w = new LinkedList<>();
+        
+        for (byte b : bytes) {
+            List<Byte> wb = new LinkedList<>(w);
+            wb.add(b);
+
+            if (dictionary.containsKey(wb)) 
+                w.add(b);
+            else {
+                output.add(dictionary.get(w));
+
+                if (dictSize < DICTIONARY_MAX_SIZE) 
+                    dictionary.put(wb, dictSize++);
+                
+                w = new LinkedList<>();
+                w.add(b);
+            }
+        }
+
+        if (!w.isEmpty()) 
+            output.add(dictionary.get(w));
+
+        return output;
+    }
+
+    private static Map<List<Byte>, Integer> initializeDictionary() {
+        Map<List<Byte>, Integer> dictionary = new HashMap<>();
+        for (int i = 0; i < 256; i++) 
+            dictionary.put(Collections.singletonList((byte) i), i);
+        return dictionary;
+    }
+
+    public static void compress(FileInputStream src, FileOutputStream dst) {
         try {
-            byte[] fileBytes = new byte[src.available()];
-            src.read(fileBytes);
-            src.close();
+            byte[] fileBytes = src.readAllBytes();
 
-            List<List<Byte>> dictionary = initializeDictionary();
+            Map<List<Byte>, Integer> dictionary = initializeDictionary();
+
             List<Integer> LZWCodes = generateLZWCodes(dictionary, fileBytes);
+
             byte[] compressed = serializeLZWCodes(LZWCodes);
 
-            dst.writeObject(compressed);
+            var dos = new DataOutputStream(dst);
+            dos.writeInt(LZWCodes.size()); 
+            dos.write(compressed); 
+
+            dos.close();
             dst.close();
+            src.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static List<List<Byte>> initializeDictionary() {
-        List<List<Byte>> dictionary = new ArrayList<>(DICTIONARY_MAX_SIZE);
-        for (int i = 0; i < BASICS_SYMBOLS_SIZE; i++) {
-            List<Byte> basicSymbol = new ArrayList<>(Byte.BYTES);
-            basicSymbol.add((byte) i);
-            dictionary.add(basicSymbol);
-        }
-        return dictionary;
+    private static byte[] serializeLZWCodes(List<Integer> LZWCodes) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+
+        for (int code : LZWCodes)
+            dos.writeInt(code);
+
+        dos.flush();
+        return baos.toByteArray();
     }
 
-    private static List<Integer> generateLZWCodes(List<List<Byte>> dictionary, byte[] bytes) {
-        List<Integer> output = new ArrayList<>();
-        for (int i = 0; i < bytes.length; i++) {
-            List<Byte> in = new ArrayList<>();
-            in.add(bytes[i++]);
+    private static List<Integer> deserializeLZWCodes(DataInputStream dis, int size) throws IOException {
+        List<Integer> LZWCodes = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) 
+            LZWCodes.add(dis.readInt());
 
-            int dictIndex = dictionary.indexOf(in);
-            int code = dictIndex;
+        return LZWCodes;
+    }
 
-            while (dictIndex != -1 && i < bytes.length) {
-                in.add(bytes[i++]);
-                code = dictIndex;
-                dictIndex = dictionary.indexOf(in);
+    public static void decompress(FileInputStream src, FileOutputStream dst) {
+        try {
+            var dis = new DataInputStream(src);
+            int size = dis.readInt();
+
+            List<Integer> LZWCodes = deserializeLZWCodes(dis, size);
+
+            List<byte[]> dictionary = new ArrayList<>();
+            for (int i = 0; i < 256; i++) 
+                dictionary.add(new byte[]{(byte) i});
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            int prevCode = LZWCodes.get(0);
+            baos.write(dictionary.get(prevCode));
+
+            for (int i = 1; i < LZWCodes.size(); i++) {
+                int currCode = LZWCodes.get(i);
+                byte[] entry;
+                if (currCode < dictionary.size()) 
+                    entry = dictionary.get(currCode);
+                else if (currCode == dictionary.size()) {
+                    byte[] prevEntry = dictionary.get(prevCode);
+                    entry = Arrays.copyOf(prevEntry, prevEntry.length + 1);
+                    entry[entry.length - 1] = prevEntry[0];
+                } else 
+                    throw new IllegalArgumentException("Invalid LZW code: " + currCode);
+                
+
+                baos.write(entry);
+
+                byte[] prevEntry = dictionary.get(prevCode);
+                byte[] newEntry = Arrays.copyOf(prevEntry, prevEntry.length + 1);
+                newEntry[newEntry.length - 1] = entry[0];
+
+                if (dictionary.size() < DICTIONARY_MAX_SIZE) 
+                    dictionary.add(newEntry);
+                
+                prevCode = currCode;
             }
 
-            output.add(code);
+            dst.write(baos.toByteArray());
 
-            if (dictionary.size() < DICTIONARY_MAX_SIZE)
-                dictionary.add(in);
+            dis.close();
+            src.close();
+            dst.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return output;
-    }
-
-    private static byte[] serializeLZWCodes(List<Integer> LZWCodes) {
-        IntegerBitSequence bis = new IntegerBitSequence(BITS_PER_INDEX);
-        LZWCodes.forEach(code -> {
-            bis.add(code);
-        });
-        return bis.getBytes();
     }
 }
