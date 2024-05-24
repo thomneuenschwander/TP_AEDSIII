@@ -1,4 +1,4 @@
-package database.algorithms.compression;
+package database.algorithms.entropy;
 
 import java.util.BitSet;
 

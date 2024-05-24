@@ -1,4 +1,4 @@
-package database.algorithms.compression.huffman;
+package database.algorithms.entropy.huffman;
 
 public class HuffmanNode implements Comparable<HuffmanNode> {
     protected Byte data;

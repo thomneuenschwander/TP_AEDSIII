@@ -1,4 +1,4 @@
-package database.algorithms.compression.lzw;
+package database.algorithms.entropy.lzw;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;

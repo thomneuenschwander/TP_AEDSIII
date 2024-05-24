@@ -1,9 +1,9 @@
-package database.algorithms.compression;
+package database.algorithms.entropy;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -12,35 +12,51 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class Compression {
+import database.domain.FileType;
+
+public class Entropy {
     private File source;
     private File destine;
     private double entropy;
     private long duration;
     private double compressionPercentage;
     private boolean loggingEnabled = false;
+    private FileType fileType;
 
-    public Compression setSource(String filePath) {
-        this.source = new File(filePath);
+    public Entropy setCompressionFileType(FileType fileType) {
+        this.fileType = fileType;
         return this;
     }
 
-    public Compression setDestine(String filePath) {
-        this.destine = new File(filePath);
+    public Entropy setSource(String filePath) throws IOException {
+        this.source = (this.fileType == null) ? new File(filePath + "db")
+                : new File(filePath + this.fileType.getExtension());
+        if (!this.source.exists())
+            this.source.createNewFile();
         return this;
     }
 
-    public Compression enableLogging(boolean enable) {
+    public Entropy setDestine(String filePath) throws IOException {
+        this.destine = (this.fileType == null) ? new File(filePath + "db")
+                : new File(filePath + this.fileType.getExtension());
+        if (!this.destine.exists())
+            this.destine.createNewFile();
+        return this;
+    }
+
+    public Entropy enableLogging(boolean enable) {
         this.loggingEnabled = enable;
         return this;
     }
 
-    public Compression zip(BiConsumer<FileInputStream, ObjectOutputStream> compressionMethod) {
-        long startTime = System.nanoTime();
-        try (FileInputStream src = new FileInputStream(source);
-                ObjectOutputStream dst = new ObjectOutputStream(new FileOutputStream(destine))) {
+    public Entropy zip(BiConsumer<FileInputStream, FileOutputStream> compressionMethod) {
+        try (var src = new FileInputStream(source);
+                var dst = new FileOutputStream(destine)) {
+
+            long startTime = System.nanoTime();
             compressionMethod.accept(src, dst);
             long endTime = System.nanoTime();
+
             this.duration = endTime - startTime;
 
             long originalSize = this.source.length();
@@ -50,11 +66,34 @@ public class Compression {
             FileInputStream compressed = new FileInputStream(destine);
             this.entropy = calculateEntropy(compressed);
 
-            if (loggingEnabled) 
+            if (loggingEnabled)
                 loggin(System.out, originalSize, compressedSize);
         } catch (Exception e) {
-            if (loggingEnabled) 
-                System.out.println("Compression faild");
+            if (loggingEnabled)
+                System.out.println("Compression failed");
+            e.printStackTrace();
+        }
+        return this;
+    }
+
+    public Entropy unzip(BiConsumer<FileInputStream, FileOutputStream> decompressionMethod) {
+        try (var src = new FileInputStream(source);
+                var dst = new FileOutputStream(destine)) {
+
+            long startTime = System.nanoTime();
+            decompressionMethod.accept(src, dst);
+            long endTime = System.nanoTime();
+
+            this.duration = endTime - startTime;
+
+            FileInputStream decompressed = new FileInputStream(destine);
+            this.entropy = calculateEntropy(decompressed);
+
+            if (loggingEnabled)
+                loggin(System.out, source.length(), destine.length());
+        } catch (Exception e) {
+            if (loggingEnabled)
+                System.out.println("Decompression failed");
             e.printStackTrace();
         }
         return this;
@@ -84,7 +123,7 @@ public class Compression {
         return loggingEnabled;
     }
 
-    private void loggin(PrintStream log, long originalSize, long compressedSize) {
+    private void loggin(PrintStream log, long originalSize, long finalSize) {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         symbols.setDecimalSeparator('.');
         symbols.setGroupingSeparator('.');
@@ -94,11 +133,13 @@ public class Compression {
         DecimalFormat percentageFormat = new DecimalFormat("#,##0.00", symbols);
         DecimalFormat entropyFormat = new DecimalFormat("#,##0.0000", symbols);
 
-        log.println("Compression took " + durationFormat.format(duration / 1_000_000.0) + " milliseconds");
+        log.println("Operation took " + durationFormat.format(duration / 1_000_000.0) + " milliseconds");
         log.println("Original size: " + sizeFormat.format(originalSize) + " bytes");
-        log.println("Compressed size: " + sizeFormat.format(compressedSize) + " bytes");
-        log.println("Compression percentage: " + percentageFormat.format(compressionPercentage) + "%");
-        log.println("Entropy of compressed file: " + entropyFormat.format(entropy));
+        log.println("Final size: " + sizeFormat.format(finalSize) + " bytes");
+        if (compressionPercentage != 0) {
+            log.println("Compression percentage: " + percentageFormat.format(compressionPercentage) + "%");
+            log.println("Entropy of compressed file: " + entropyFormat.format(entropy));
+        }
     }
 
     public static double calculateEntropy(FileInputStream fis) {

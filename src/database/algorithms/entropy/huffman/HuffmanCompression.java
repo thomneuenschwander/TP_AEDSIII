@@ -1,4 +1,4 @@
-package database.algorithms.compression.huffman;
+package database.algorithms.entropy.huffman;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -10,25 +10,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-import database.algorithms.compression.Compression;
+import database.algorithms.entropy.Entropy;
 
 public class HuffmanCompression {
 
-    public static void compress(FileInputStream src, ObjectOutputStream dst) {
+    public static void compress(FileInputStream src, FileOutputStream dst) {
         try {
             byte[] fileBytes = new byte[src.available()];
             src.read(fileBytes);
             src.close();
 
-            Map<Byte, Integer> frequencies = Compression.calculateFrequencies(fileBytes);
+            Map<Byte, Integer> frequencies = Entropy.calculateFrequencies(fileBytes);
             HuffmanNode root = createHuffmanTree(frequencies);
 
             Map<Byte, String> codeMap = new HashMap<>();
             generateCodes(root, new StringBuilder(), codeMap);
             byte[] huffmanEncoded = encode(fileBytes, codeMap);
 
-            dst.writeObject(huffmanEncoded);
-            dst.writeObject(codeMap);
+            var oos = new ObjectOutputStream(dst);
+            oos.writeObject(huffmanEncoded);
+            oos.writeObject(codeMap);
+
+            oos.close();
             dst.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -92,26 +95,24 @@ public class HuffmanCompression {
         return bytes;
     }
 
-    public static void decompress(String inputFilePath, String outputFilePath) {
+    public static void decompress(FileInputStream src, FileOutputStream dst) {
         try {
-            var fis = new FileInputStream(inputFilePath);
-            var ois = new ObjectInputStream(fis);
+            var ois = new ObjectInputStream(src);
             byte[] compressed = (byte[]) ois.readObject();
 
             @SuppressWarnings("unchecked")
             Map<Byte, String> huffmanCodeMap = (Map<Byte, String>) ois.readObject();
-            fis.close();
+            ois.close();
+            src.close();
 
             StringBuilder bits = bitUnpacking(compressed);
             Map<String, Byte> reverseMap = reverseHuffmanCodeMap(huffmanCodeMap);
             List<Byte> decodedBytes = decodeBitsToBytes(bits, reverseMap);
 
-            var fos = new FileOutputStream(outputFilePath);
-
             for (Byte b : decodedBytes)
-                fos.write(b);
+                dst.write(b);
 
-            fos.close();
+            dst.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
