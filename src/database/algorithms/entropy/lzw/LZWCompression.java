@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 public class LZWCompression {
-    private static final int DICTIONARY_MAX_SIZE = 4096;
+    private static final int DICTIONARY_MAX_SIZE = 4095;
 
     private static List<Integer> generateLZWCodes(Map<List<Byte>, Integer> dictionary, byte[] bytes) {
         List<Integer> output = new LinkedList<>();

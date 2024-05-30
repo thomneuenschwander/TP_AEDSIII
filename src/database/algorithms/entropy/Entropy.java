@@ -140,6 +140,7 @@ public class Entropy {
             log.println("Compression percentage: " + percentageFormat.format(compressionPercentage) + "%");
             log.println("Entropy of compressed file: " + entropyFormat.format(entropy));
         }
+        System.out.println();
     }
 
     public static double calculateEntropy(FileInputStream fis) {

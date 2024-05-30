@@ -61,9 +61,16 @@ public class Main {
     private static void printSummary(Entropy entropy) {
         System.out.println("Source File: " + entropy.getSource().getPath());
         System.out.println("Destination File: " + entropy.getDestine().getPath());
-        System.out.println("Duration: " + entropy.getDuration() + " nanoseconds");
-        System.out.println("Compression Percentage: " + entropy.getCompressionPercentage() + "%");
+        
+        long durationInMs = entropy.getDuration() / 1_000_000; 
+        System.out.println("Duration: " + durationInMs + " milliseconds");
+        
+        double compressionPercentage = entropy.getCompressionPercentage();
+        if (compressionPercentage != 0) 
+            System.out.println("Compression Percentage: " + compressionPercentage + "%");
+        
         System.out.println("Entropy: " + entropy.getEntropy());
         System.out.println();
     }
+    
 }
