@@ -23,7 +23,7 @@ public class KMP {
         return lps;
     }
 
-    public static int matchPattern(String text, String pattern) {
+    public static int matchPatternAt(String text, String pattern) {
         int count = 0;
         int n = text.length();
         int m = pattern.length();

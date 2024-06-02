@@ -2,7 +2,7 @@ package database.algorithms.patternMatching;
 
 public class Naive {
 
-    public static int matchPattern(String text, String pattern) {
+    public static int matchPatternAt(String text, String pattern) {
         int m = pattern.length();
         int n = text.length();
         int count = 0;
