@@ -29,7 +29,6 @@ public class TranspositionCipher {
                 encodedMessage.add(b != null ? b : (byte) ' ');
         }
 
-        // Convert List<Byte> to byte[]
         byte[] result = new byte[encodedMessage.size()];
         for (int i = 0; i < encodedMessage.size(); i++) {
             result[i] = encodedMessage.get(i);
