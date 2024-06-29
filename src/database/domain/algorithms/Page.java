@@ -1,4 +1,4 @@
-package database.domain.structs;
+package database.domain.algorithms;
 
 import java.io.IOException;
 

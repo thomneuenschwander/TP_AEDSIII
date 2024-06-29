@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import database.domain.algorithms.Index;
 import database.domain.persistence.Record;
-import database.domain.structs.Index;
 
 public class SequentialAcess<T extends Record> {
     private final RandomAccessFile raf;

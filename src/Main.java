@@ -1,75 +1,26 @@
-import database.algorithms.entropy.Entropy;
-import database.algorithms.entropy.huffman.HuffmanCompression;
-import database.algorithms.entropy.lzw.LZWCompression;
-import database.domain.FileType;
+import database.RepositoryImpl02;
+import database.algorithms.cryptography.RSA;
+import database.algorithms.patternMatching.BoyerMoore;
 
 public class Main {
-    static final String COMPRESSION_SRC_PATH = "src\\database\\data\\data";
+    static final String DIR = "src\\database\\data\\";
 
-    static final String HUFFMAN_COMPRESSION_DST_PATH = "src\\database\\data\\entropy\\HUFFMAN_compressed";
-
-    static final String HUFFMAN_DECOMPRESSION_SRC_PATH = HUFFMAN_COMPRESSION_DST_PATH;
-    static final String HUFFMAN_DECOMPRESSION_DST_PATH = "src\\database\\data\\entropy\\HUFFMAN_decompressed";
-
-    static final String LZW_COMPRESSION_DST_PATH = "src\\database\\data\\entropy\\LZW_compressed";
-
-    static final String LZW_DECOMPRESSION_SRC_PATH = LZW_COMPRESSION_DST_PATH;
-    static final String LZW_DECOMPRESSION_DST_PATH = "src\\database\\data\\entropy\\LZW_decompressed";
+    static final String C = DIR + "cryptography\\plain.txt";
+    static final String D = DIR + "cryptography\\encrypted_RSA.txt";
+    static final String E = DIR + "cryptography\\decrypted_RSA.txt";
 
     public static void main(String[] args) throws Exception {
+        RepositoryImpl02 repository = new RepositoryImpl02();
 
-        var huffmanEncoding = new Entropy()
-                .enableLogging(false)
-                .setCompressionFileType(FileType.DB)
-                .setSource(COMPRESSION_SRC_PATH)
-                .setDestine(HUFFMAN_COMPRESSION_DST_PATH)
-                .zip(HuffmanCompression::compress);
+        String pattern = "Schenectady";
+        boolean match = repository.searchPattern(BoyerMoore::matchPatternAt, pattern.getBytes(), DIR + "data.db");
 
-        var huffmanDecoding = new Entropy()
-                .enableLogging(false)
-                .setCompressionFileType(FileType.DB)
-                .setSource(HUFFMAN_DECOMPRESSION_SRC_PATH)
-                .setDestine(HUFFMAN_DECOMPRESSION_DST_PATH)
-                .unzip(HuffmanCompression::decompress);
+        System.out.println(match);
 
-        var lzwEncoding = new Entropy()
-                .enableLogging(false)
-                .setCompressionFileType(FileType.DB)
-                .setSource(COMPRESSION_SRC_PATH)
-                .setDestine(LZW_COMPRESSION_DST_PATH)
-                .zip(LZWCompression::compress);
+        RSA rsa = new RSA(1024);
 
-        var lzwDecoding = new Entropy()
-                .enableLogging(false)
-                .setCompressionFileType(FileType.DB)
-                .setSource(LZW_DECOMPRESSION_SRC_PATH)
-                .setDestine(LZW_DECOMPRESSION_DST_PATH)
-                .unzip(LZWCompression::decompress);
+        RSA.encryptFile(rsa, C, D);
 
-        System.out.println("Huffman Compression Summary:");
-        printSummary(huffmanEncoding);
-        System.out.println("Huffman Decompression Summary:");
-        printSummary(huffmanDecoding);
-
-        System.out.println("LZW Compression Summary:");
-        printSummary(lzwEncoding);
-        System.out.println("LZW Decompression Summary:");
-        printSummary(lzwDecoding);
+        RSA.decryptFile(rsa, D, E);
     }
-
-    private static void printSummary(Entropy entropy) {
-        System.out.println("Source File: " + entropy.getSource().getPath());
-        System.out.println("Destination File: " + entropy.getDestine().getPath());
-
-        long durationInMs = entropy.getDuration() / 1_000_000;
-        System.out.println("Duration: " + durationInMs + " milliseconds");
-
-        double compressionPercentage = entropy.getCompressionPercentage();
-        if (compressionPercentage != 0)
-            System.out.println("Compression Percentage: " + String.format("%.2f", compressionPercentage) + "%");
-
-        System.out.println("Entropy: " + entropy.getEntropy());
-        System.out.println();
-    }
-
 }

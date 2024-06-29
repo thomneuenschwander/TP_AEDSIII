@@ -9,7 +9,7 @@ import database.algorithms.SequentialAcess;
 import database.algorithms.extensibleHash.ExtensibleHash;
 import database.algorithms.invertedList.InvertedList;
 import database.domain.Repository;
-import database.domain.structs.Index;
+import database.domain.algorithms.Index;
 
 public class RepositoryImpl implements Repository {
     private ExtensibleHash<Index> hash;

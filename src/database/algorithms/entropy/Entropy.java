@@ -12,7 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-import database.domain.FileType;
+import database.domain.persistence.FileType;
 
 public class Entropy {
     private File source;

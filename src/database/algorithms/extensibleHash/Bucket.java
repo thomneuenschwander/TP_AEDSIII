@@ -9,8 +9,8 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import database.domain.algorithms.Index;
 import database.domain.persistence.Serializable;
-import database.domain.structs.Index;
 
 public class Bucket<T extends Index> implements Serializable {
     protected byte localDeep;

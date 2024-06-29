@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class TranspositionCipher {
+import database.domain.Cryptography;
+
+public class TranspositionCipher implements Cryptography {
     private final String key;
 
     public TranspositionCipher(String key) {
@@ -18,8 +20,9 @@ public class TranspositionCipher {
         return key;
     }
 
-    public byte[] encode(byte[] rawMessage) {
-        Map<Character, List<Byte>> table = generateTable(rawMessage);
+    @Override
+    public synchronized byte[] encrypt(byte[] raw) {
+        Map<Character, List<Byte>> table = generateTable(raw);
         List<Byte> encodedMessage = new ArrayList<>();
 
         TreeMap<Character, List<Byte>> sortedTable = new TreeMap<>(table);
@@ -37,9 +40,10 @@ public class TranspositionCipher {
         return result;
     }
 
-    public byte[] decode(byte[] encodedMessage) {
+    @Override
+    public synchronized byte[] decrypt(byte[] encrypted) {
         int colCount = key.length();
-        int rowCount = (int) Math.ceil((double) encodedMessage.length / colCount);
+        int rowCount = (int) Math.ceil((double) encrypted.length / colCount);
 
         Map<Character, List<Byte>> sortedTable = new TreeMap<>();
         for (char ch : key.toCharArray()) 
@@ -48,8 +52,8 @@ public class TranspositionCipher {
         int index = 0;
         for (var entry : sortedTable.entrySet()) {
             for (int i = 0; i < rowCount; i++) {
-                if (index < encodedMessage.length)
-                    entry.getValue().set(i, encodedMessage[index++]);
+                if (index < encrypted.length)
+                    entry.getValue().set(i, encrypted[index++]);
             }
         }
 
@@ -90,5 +94,10 @@ public class TranspositionCipher {
         }
 
         return table;
+    }
+
+    @Override
+    public String getAlgorithmName() {
+        return "TranspositionCipher";
     }
 }

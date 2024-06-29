@@ -1,4 +1,4 @@
-package database.domain;
+package database.domain.persistence;
 
 public enum FileType {
     BIN(".bin"),
